@@ -10,11 +10,12 @@ import { Button, Input } from "../../LIBS";
 import axios from "axios";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
+import { useUser } from "../../Context/userContext";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 const SellerRegistrationPage = () => {
   const [sellerDetail, setSellerDetail] = useState(initialSellerDetails);
   const { theme } = useTheme();
-  const { userDetail } = userDetail();
+  const { userDetail } = useUser();
   const { authToken } = useAuth();
   const [isDataSending, setIsDataSending] = useState(false);
   const [isSubmit, setIsSubmit] = useState(false);
@@ -107,7 +108,7 @@ const SellerRegistrationPage = () => {
     return () => {
       setSellerDetail(initialSellerDetails);
     };
-  }, [authToken, navigate, userDetail?.userType]);
+  }, [authToken, navigate]);
 
   return (
     <div
