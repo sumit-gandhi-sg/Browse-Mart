@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "../../LIBS";
+import { Button, SectionTitle } from "../../LIBS";
 import { useTheme } from "../../Context/themeContext";
 import { Link, useNavigate } from "react-router-dom";
 import { productCategory } from "../../utility/constant";
@@ -84,11 +84,14 @@ const HomePage = () => {
             : "bg-indigo-100 text-gray-900"
         } shadow-lg transition-all duration-300 `}
       >
-        <h2 className="text-4xl font-bold">Discover Amazing Deals</h2>
+        <SectionTitle
+          title="Discover Amazing Deals"
+          className="text-4xl font-bold"
+        />
         <p
           className={` ${
             theme === "dark" ? "text-gray-300" : "text-gray-700"
-          } mt-2`}
+          } mt-2 transition-all duration-300 `}
         >
           Shop the latest trends with up to 50% off
         </p>
