@@ -23,8 +23,9 @@ const BuyNow = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { authToken } = useAuth();
+
   const { productId } = useParams();
-  const { userDetail } = useUser();
+  const { userDetail, setUserDetail } = useUser();
   const [isorderSubmitting, setIsOrderSubmitting] = useState(false);
   const [productArr, setProductArr] = useState([]);
   const [isDataFetching, setIsDataFetching] = useState(false);
@@ -164,8 +165,17 @@ const BuyNow = () => {
     })
       .then((response) => {
         const { data, status } = response;
+        if (data?.updatedShippingAddress) {
+          setUserDetail((prev) => {
+            return {
+              ...prev,
+              shippingAddress: data?.updatedShippingAddress,
+            };
+          });
+        }
 
         setIsOrderSubmitting((prev) => !prev);
+
         if (status === 201) {
           navigate("/order-success", { state: data?.orderIds });
         }
