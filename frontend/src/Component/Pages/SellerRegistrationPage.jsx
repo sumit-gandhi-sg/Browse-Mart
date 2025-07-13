@@ -109,7 +109,9 @@ const SellerRegistrationPage = () => {
       setSellerDetail(initialSellerDetails);
     };
   }, [authToken, navigate]);
-
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to the top on component mount
+  }, []);
   return (
     <div
       className={` flex-1 flex justify-center  items-center transition-all duration-300 h-full ${
