@@ -506,7 +506,7 @@ export const formatNumber = (amount, icon = "₹") => {
   const amountString = amount?.toString();
   return amount
     ? icon + amountString?.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    : "";
+    : amount;
 };
 
 // Generating Dynamic future Years
