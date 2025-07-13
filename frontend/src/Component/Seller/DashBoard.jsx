@@ -50,7 +50,7 @@ const DashBoard = () => {
       <div
         className={`${
           theme === "dark" ? " text-white " : " text-gray-900"
-        } font-roboto`}
+        } font-roboto transition-all duration-300`}
       >
         <SectionTitle title="Dashboard Overview" />
         {/* <h2 className="text-2xl m-3 font-semibold">Dashboard Overview</h2> */}
@@ -61,26 +61,26 @@ const DashBoard = () => {
           {[
             {
               label: "Total Sales",
-              value: dashBoardDetail?.totalSales?.[0]?.total,
+              value: dashBoardDetail?.totalSales?.[0]?.total || 0,
               change: "+12.5%",
               icon: "📈",
               symbol: "₹",
             },
             {
               label: "Total Orders",
-              value: dashBoardDetail?.totalOrder,
+              value: dashBoardDetail?.totalOrder || 0,
               change: "+8.2%",
               icon: "🛒",
             },
             {
               label: "Total Products",
-              value: dashBoardDetail?.totalProducts,
+              value: dashBoardDetail?.totalProducts || 0,
               change: "+24",
               icon: "📦",
             },
             {
               label: "Total Customers",
-              value: dashBoardDetail?.totalCustomer,
+              value: dashBoardDetail?.totalCustomer || 0,
               change: "+18.3%",
               icon: "👤",
             },
@@ -156,6 +156,16 @@ const DashBoard = () => {
                     </td>
                   </tr>
                 ))}
+                {dashBoardDetail?.recentOrders?.length === 0 && (
+                  <tr className=" pt-5">
+                    <td
+                      colSpan="4"
+                      className="p-4 text-center mt-5 text-gray-500"
+                    >
+                      No recent orders found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
