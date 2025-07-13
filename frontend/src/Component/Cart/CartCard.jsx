@@ -63,6 +63,14 @@ const CartCard = ({
     updateCart(quantity - 1);
     // }
   };
+  //   const handleDecrement = () => {
+  //   if (quantity > 1) {
+  //     const newQty = quantity - 1;
+  //     setQuantity(newQty);
+  //     updateCart(newQty);
+  //   }
+  // };
+
   const handleRemoveClicked = () => {
     updateCart();
   };
@@ -104,16 +112,25 @@ const CartCard = ({
         </span>
         <div className="w-1/3 flex justify-center items-center gap-3">
           <span
-            className="cursor-pointer p-1 hover:bg-gray-100 rounded-full"
+            className={`cursor-pointer p-1 rounded-full ${
+              theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-200"
+            }`}
             onClick={handleDecrement}
           >
             <FaMinus />
           </span>
-          <span className=" bg-blue-100 border-blue-300 border-2 px-3 py-1">
+          <span
+            className={`px-3 py-1 transition-all duration-300 text-center  border border-gray-600 rounded-md ${
+              theme === "dark" ? "bg-gray-700 " : "bg-gray-200 "
+            }`}
+            // className=" bg-blue-100 border-blue-300 border-2 px-3 py-1"
+          >
             {product?.quantity}
           </span>
           <span
-            className="cursor-pointer p-1 hover:bg-gray-100 rounded-full"
+            className={`cursor-pointer p-1 rounded-full ${
+              theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-200"
+            }`}
             onClick={handleIncrement}
           >
             <FaPlus />
