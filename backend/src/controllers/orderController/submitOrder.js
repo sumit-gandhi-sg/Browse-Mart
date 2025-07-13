@@ -154,6 +154,9 @@ const submitOrder = async (req, res, next) => {
     res?.status(201)?.json({
       message: "Order submitted successfully",
       orderIds,
+      ...(isDefaultShippingAddressSaved === true && {
+        updatedShippingAddress: activeUser.shippingAddress,
+      }),
     });
   } catch (error) {
     console.error("Line No 203", error);
