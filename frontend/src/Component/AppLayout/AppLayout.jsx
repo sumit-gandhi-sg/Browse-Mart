@@ -4,7 +4,7 @@ import { useUser } from "../../Context/userContext";
 import Navbar from "../Navbar/Navbar";
 import { Outlet } from "react-router-dom";
 import Footer from "../Footer/Footer";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 
 const AppLayout = () => {
   const { toggleTheme } = useTheme();
