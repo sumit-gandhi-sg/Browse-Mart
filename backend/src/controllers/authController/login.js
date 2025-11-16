@@ -46,10 +46,12 @@ const login = async (req, res, next) => {
       AuthToken: await existingUser.generateToken(),
     });
   } catch (err) {
-    console.log(err);
+    res?.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: err.message,
+      rowError: err,
+    });
   }
-  // Create and sign JWT token
-  // const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  // res.json({ token: token });
 };
 export default login;
