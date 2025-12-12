@@ -33,7 +33,12 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [step, setStep] = useState(1);
   const [isPasswordShow, setIsPasswordShow] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState({
+    form: false,
+    guestLogin: false,
+    sellerLogin: false,
+    otpVerification: false,
+  });
   const redirect = new URLSearchParams(location?.search)?.get("redirect");
   // const checkValidation = () => {
   //   const newErrors = {};
@@ -45,10 +50,10 @@ const Login = () => {
   //   return Object.keys(newErrors).length === 0;
   // };
 
-  const handleLogin = (formData) => {
+  const handleLogin = (formData, caller) => {
     setError({});
     setErrorMessage("");
-    setIsProcessing(true);
+    setIsProcessing((prev) => ({ ...prev, [caller]: true }));
     axios({
       method: "POST",
       url: `${SERVER_URL}/api/auth/login`,
@@ -78,12 +83,18 @@ const Login = () => {
           message = "",
           sucess = undefined,
           requiresVerification = undefined,
+          error: errorMessage = null,
         } = error?.response?.data || error;
         if (status === 403 && requiresVerification) {
           setMessage(message);
           setStep(2);
         } else {
-          setErrorMessage(message || "Something went wrong");
+          Toast.fire({
+            icon: "error",
+            title: message || "Something went wrong",
+            text: errorMessage,
+          });
+          // setErrorMessage(message || "Something went wrong");
           // swalCustomConfiguration(theme)?.fire(
           //   "Oops!",
           //   "Something went wrong",
@@ -91,17 +102,17 @@ const Login = () => {
           // );
         }
       })
-      .finally(() => setIsProcessing(false));
+      .finally(() => setIsProcessing((prev) => ({ ...prev, [caller]: false })));
   };
   const handleOtpSubmit = (otp) => {
     if (otp.length < 6) {
       setErrorMessage("OTP must be Six Digit");
       return;
     }
-    handleOtpVerification(otp);
+    handleOtpVerification(otp, "otpVerification");
   };
-  const handleOtpVerification = (otp) => {
-    setIsProcessing(true);
+  const handleOtpVerification = (otp, caller) => {
+    setIsProcessing((prev) => ({ ...prev, [caller]: true }));
 
     axios({
       method: "post",
@@ -127,7 +138,7 @@ const Login = () => {
         }
       })
       .finally(() => {
-        setIsProcessing(false);
+        setIsProcessing((prev) => ({ ...prev, [caller]: false }));
       });
   };
   const handleSubmit = (e) => {
@@ -139,15 +150,15 @@ const Login = () => {
       return;
     }
     setError({});
-    handleLogin(loginData);
+    handleLogin(loginData, "form");
   };
   const handleGuestLogin = (e) => {
     e.preventDefault();
-    handleLogin(guestUser);
+    handleLogin(guestUser, "guestLogin");
   };
   const handleSellerLogin = (e) => {
     e.preventDefault();
-    handleLogin(sellerUser);
+    handleLogin(sellerUser, "sellerLogin");
   };
   const handleInput = (e) => {
     const { name, value } = e.target;
@@ -280,11 +291,11 @@ const Login = () => {
                   className="w-full mt-4  text-white py-2 rounded-md bg-gradient-to-r from-blue-500 to-purple-500"
                   onClick={handleSubmit}
                   icon={
-                    isProcessing && (
+                    isProcessing.form && (
                       <BiLoaderAlt className="animate-spin h-6 w-6" />
                     )
                   }
-                  disabled={isProcessing}
+                  disabled={isProcessing.form}
                 />
 
                 <div className="text-center my-4 text-gray-500">
@@ -297,7 +308,7 @@ const Login = () => {
                       : "bg-gray-200 text-gray-900"
                   }`}
                   icon={
-                    isProcessing ? (
+                    isProcessing.guestLogin ? (
                       <BiLoaderAlt className="animate-spin h-6 w-6" />
                     ) : (
                       ""
@@ -305,7 +316,7 @@ const Login = () => {
                   }
                   onClick={handleGuestLogin}
                   btntext={"Continue with Guest"}
-                  disabled={isProcessing}
+                  disabled={isProcessing.guestLogin}
                 />
 
                 <Button
@@ -315,7 +326,7 @@ const Login = () => {
                       : "bg-gray-200 text-gray-900"
                   }`}
                   icon={
-                    isProcessing ? (
+                    isProcessing.sellerLogin ? (
                       <BiLoaderAlt className="animate-spin h-6 w-6" />
                     ) : (
                       ""
@@ -323,7 +334,7 @@ const Login = () => {
                   }
                   onClick={handleSellerLogin}
                   btntext={"Continue with Seller"}
-                  disabled={isProcessing}
+                  disabled={isProcessing.sellerLogin}
                 />
                 {/* <Button
               className={`w-full flex items-center justify-center gap-2 p-2 rounded-md ${
@@ -348,7 +359,7 @@ const Login = () => {
             )}
             {step === 2 && (
               <OTPInput
-                isProcessing={isProcessing}
+                isProcessing={isProcessing.otpVerification}
                 message={message}
                 errorMessage={errorMessage}
                 onOtpVerify={handleOtpSubmit}

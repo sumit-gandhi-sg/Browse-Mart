@@ -36,10 +36,16 @@ const RegisterPage = ({ userDetail }) => {
     phoneNumber: "",
     passwordValidation: "",
   });
-  const [isPasswordShow, setIsPasswordShow] = useState(false);
+  const [isPasswordShow, setIsPasswordShow] = useState({
+    password: false,
+    confirmPassword: false,
+  });
   const redirect = new URLSearchParams(location?.search)?.get("redirect");
-  const passwordToggle = () => {
-    setIsPasswordShow((prev) => !prev);
+  const passwordToggle = (field) => {
+    setIsPasswordShow((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
   };
   const checkValidation = () => {
     let errors = {};
@@ -297,7 +303,9 @@ const RegisterPage = ({ userDetail }) => {
                     {/* <label className="block text-sm font-medium">Password</label> */}
                     <div className="w-full relative">
                       <Input
-                        type={`${isPasswordShow ? "text" : "password"}`}
+                        type={`${
+                          isPasswordShow.password ? "text" : "password"
+                        }`}
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
@@ -311,14 +319,14 @@ const RegisterPage = ({ userDetail }) => {
                       />
 
                       <div
-                        onClick={passwordToggle}
+                        onClick={() => passwordToggle("password")}
                         className={`hover:cursor-pointer absolute  right-3 top-1/2 -translate-y-1/2 ${
                           formData?.password
                             ? "flex items-center justify-center"
                             : "hidden"
                         } `}
                       >
-                        {isPasswordShow ? (
+                        {isPasswordShow.password ? (
                           <FaEyeSlash
                             className={`${
                               theme === "dark" ? "text-white" : "text-gray-900"
@@ -344,7 +352,9 @@ const RegisterPage = ({ userDetail }) => {
                   <div className="flex flex-col gap-2 relative">
                     <div className="w-full relative">
                       <Input
-                        type={`${isPasswordShow ? "text" : "password"}`}
+                        type={`${
+                          isPasswordShow.confirmPassword ? "text" : "password"
+                        }`}
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleChange}
@@ -358,14 +368,14 @@ const RegisterPage = ({ userDetail }) => {
                       />
 
                       <div
-                        onClick={passwordToggle}
+                        onClick={() => passwordToggle("confirmPassword")}
                         className={`hover:cursor-pointer absolute top-1/2  right-3  -translate-y-1/2 ${
                           formData?.confirmPassword
                             ? "flex items-center justify-center"
                             : "hidden"
                         } `}
                       >
-                        {isPasswordShow ? (
+                        {isPasswordShow.confirmPassword ? (
                           <FaEyeSlash
                             className={`${
                               theme === "dark" ? "text-white" : "text-gray-900"
