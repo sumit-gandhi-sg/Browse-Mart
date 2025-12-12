@@ -10,6 +10,7 @@ const OTPInput = ({
   errorMessage = "",
   message = "",
   isProcessing = false,
+  onResendOTP = () => {},
 }) => {
   const [otp, setOtp] = useState(new Array(length).fill(""));
   const inputRefs = useRef([]);
@@ -43,6 +44,13 @@ const OTPInput = ({
       setIsResendDisabled(false); // Enable the resend button
     }
   }, [timer]);
+
+  const handleResendOTP = () => {
+    setOtp(new Array(length).fill("")); // Clear OTP inputs
+    setTimer(60); // Reset timer to 60 seconds
+    setIsResendDisabled(true); // Disable resend button
+    onResendOTP(); // Call parent's resend function
+  };
 
   return (
     <div
@@ -109,7 +117,8 @@ const OTPInput = ({
           ) : (
             <Button
               className="text-blue-500 hover:underline"
-              btntext="Resent OTP"
+              btntext="Resend OTP"
+              onClick={handleResendOTP}
             />
             // <button
             //   // onClick={handleResendOTP}

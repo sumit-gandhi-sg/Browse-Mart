@@ -134,11 +134,39 @@ const Login = () => {
         const data = error?.response?.data;
         const status = error?.response?.status;
         if (status === 400) {
-          setError(data?.message);
+          setErrorMessage(data?.message);
         }
       })
       .finally(() => {
         setIsProcessing((prev) => ({ ...prev, [caller]: false }));
+      });
+  };
+
+  const onResendOTP = () => {
+    // setIsProcessing((prev) => ({ ...prev, otpVerification: true }));
+    setErrorMessage("");
+    setMessage("");
+
+    axios({
+      method: "POST",
+      url: `${SERVER_URL}/api/auth/resend-otp`,
+      data: { email: loginData?.email },
+      headers: { "Content-Type": "application/json; charset=UTF-8" },
+    })
+      .then((response) => {
+        const { status, data } = response;
+        if (status === 200) {
+          setMessage(data?.message);
+          setErrorMessage("");
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        const status = error?.response?.status;
+        const { message = "Failed to resend OTP" } =
+          error?.response?.data || {};
+        setErrorMessage(message);
+        setMessage("");
       });
   };
   const handleSubmit = (e) => {
@@ -363,6 +391,7 @@ const Login = () => {
                 message={message}
                 errorMessage={errorMessage}
                 onOtpVerify={handleOtpSubmit}
+                onResendOTP={onResendOTP}
               />
             )}
           </form>

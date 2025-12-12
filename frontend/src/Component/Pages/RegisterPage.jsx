@@ -123,10 +123,11 @@ const RegisterPage = ({ userDetail }) => {
       })
       .catch((error) => {
         const data = error?.response?.data;
-        const status = error?.response?.status;
-        if (status === 400) {
-          setError(data?.message);
-        }
+        // const status = error?.response?.status;
+        // if (status === 400) {
+        setErrorMessage(data?.message);
+        setError(data?.message);
+        // }
       })
       .finally(() => {
         setIsProcessing(false);
@@ -172,6 +173,34 @@ const RegisterPage = ({ userDetail }) => {
       })
       .finally(() => {
         setIsProcessing(false);
+      });
+  };
+
+  const onResendOTP = () => {
+    // setIsProcessing(true);
+    setErrorMessage("");
+    setMessage("");
+
+    axios({
+      method: "POST",
+      url: `${SERVER_URL}/api/auth/resend-otp`,
+      data: { email: formData?.email },
+      headers: { "Content-Type": "application/json; charset=UTF-8" },
+    })
+      .then((response) => {
+        const { status, data } = response;
+        if (status === 200) {
+          setMessage(data?.message);
+          setErrorMessage("");
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        const status = error?.response?.status;
+        const { message = "Failed to resend OTP" } =
+          error?.response?.data || {};
+        setErrorMessage(message);
+        setMessage("");
       });
   };
 
@@ -431,6 +460,7 @@ const RegisterPage = ({ userDetail }) => {
                 errorMessage={errorMessage}
                 onOtpVerify={onOtpVerify}
                 isProcessing={isProcessing}
+                onResendOTP={onResendOTP}
               />
             )}
           </form>
