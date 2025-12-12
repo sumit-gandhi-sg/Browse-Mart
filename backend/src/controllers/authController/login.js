@@ -1,6 +1,5 @@
 import sendOtpEmail from "../../services/otpService.js";
 import User from "../../model/userSchema.js";
-import bcrypt from "bcrypt";
 
 const login = async (req, res, next) => {
   const { email, password } = req.body;
@@ -26,18 +25,34 @@ const login = async (req, res, next) => {
         .json({ success: false, message: "Invalid Credentials" });
     }
     if (!existingUser?.isVerified) {
-      const otp = await sendOtpEmail(
+      const hashedOtp = await sendOtpEmail(
         existingUser?.email,
         "Your Registration OTP"
       );
+
+      if (!hashedOtp) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to send OTP. Please try again.",
+        });
+      }
+
       const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-      existingUser.otp = otp;
-      existingUser.expireAt = otpExpires;
+
+      // console.log("=== LOGIN OTP GENERATION ===");
+      // console.log("OTP Expiry Set To:", otpExpires);
+      // console.log("Current Time:", new Date());
+      // console.log("===========================");
+
+      existingUser.otp = hashedOtp;
+      existingUser.otpExpireAt = otpExpires;
       await existingUser.save();
+
       return res.status(403).json({
         success: false,
-        message: "Email not verified. please verify your email!",
+        message: "Email not verified. OTP sent to your email!",
         requiresVerification: true,
+        email: existingUser.email,
       });
     }
     return res.status(200).json({

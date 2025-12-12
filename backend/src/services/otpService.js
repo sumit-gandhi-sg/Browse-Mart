@@ -5,7 +5,7 @@ const sendOtpEmail = async (email, subject) => {
   try {
     const otp = Math.floor(100000 + Math.random() * 900000);
     const salt = await bcrypt.genSalt(10);
-    const hashOtp = await bcrypt.hash(otp.toString(), salt);
+    const hashOtp = await bcrypt.hash(otp.toString()?.trim(), salt);
     const htmlContent = `
     <div style="font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px;">
       <div style="max-width: 500px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">

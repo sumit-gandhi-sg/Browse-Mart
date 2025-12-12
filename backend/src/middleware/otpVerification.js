@@ -1,5 +1,5 @@
 import User from "../model/userSchema.js";
-import bcrypt from "bcrypt";
+
 const otpVerification = async (req, res, next) => {
   const { email, otp } = req.body;
   try {
@@ -13,17 +13,26 @@ const otpVerification = async (req, res, next) => {
     if (!user)
       return res
         .status(400)
-        .json({ message: "You are not a Registered User!" });
+        .json({ success: false, message: "You are not a Registered User!" });
 
-    // if (user.otp !== otp || new Date() > user.otpExpireAt) {
-    //   return {
-    //     isOtpVerified: false,
-    //     success: false,
-    //     message: "Invalid or Expired OTP! Please try again.",
-    //   };
-    // }
-    // const isOtpValid = await user.compareOtp(otp);
-    const isOtpValid = await bcrypt.compare(otp.toString().trim(), user.otp);
+    // Check if OTP exists and is not expired
+    if (!user.otp || !user.otpExpireAt) {
+      return res.status(400).json({
+        success: false,
+        message: "No OTP found. Please request a new one.",
+      });
+    }
+
+    // Debug logs
+    // console.log("=== OTP VERIFICATION DEBUG ===");
+    // console.log("Received OTP:", otp.toString().trim());
+    // console.log("OTP Expiry:", user.otpExpireAt);
+    // console.log("Current Time:", new Date());
+    // console.log("Is Expired:", new Date() > user.otpExpireAt);
+    // console.log("==============================");
+
+    const isOtpValid = await user.compareOtp(otp.toString().trim());
+    console.log("OTP Valid:", isOtpValid);
 
     if (!isOtpValid || new Date() > user.otpExpireAt) {
       return res.status(400).json({
@@ -38,7 +47,11 @@ const otpVerification = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.error(error);
+    console.error("OTP Verification Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
   }
 };
 

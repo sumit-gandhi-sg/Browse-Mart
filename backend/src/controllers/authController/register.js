@@ -18,21 +18,28 @@ const register = async (req, res) => {
       });
     if (password !== confirmPassword)
       return res?.status(400)?.json({
-        sucess: false,
-        message: "both Password and confirm Password must be same",
+        success: false,
+        message: "Both password and confirm password must be same",
       });
     const hashedOtp = await sendOtpEmail(email, "Your Registration OTP");
     const otpExpireAt = new Date(Date.now() + 10 * 60 * 1000);
+
     if (!hashedOtp) {
       return res?.status(500)?.json({
         success: false,
-        message: "Something went wrong please try agian later",
+        message: "Failed to send OTP. Please try again later.",
       });
     }
+
+    // console.log("=== REGISTRATION OTP GENERATION ===");
+    // console.log("OTP Expiry Set To:", otpExpireAt);
+    // console.log("Current Time:", new Date());
+    // console.log("===================================");
+
     const newUser = new User({
       name: name.trim(),
       email: email.trim(),
-      password: password, // Hash later after OTP verification
+      password: password,
       TandC: TandC || false,
       otp: hashedOtp,
       otpExpireAt,
@@ -46,26 +53,20 @@ const register = async (req, res) => {
         "Your OTP has been sent! Kindly check your inbox or spam folder.",
       email,
     });
-    // const newUser = new User({
-    //   name: name.trim(),
-    //   email: email.trim(),
-    //   password: password,
-    //   TandC: TandC,
-    // });
-    // await newUser.save();
-
-    // res.status(201).json({
-    //   message: "User created successfully",
-    //   AuthToken: await newUser.generateToken(),
-    // });
   } catch (error) {
     if (error.code === 11000) {
       const field = Object?.keys(error?.keyPattern)[0];
       const value = error?.keyValue[field];
-      res.status(400).send(`${field} ${value} already exists.`);
-      return;
+      return res.status(400).json({
+        success: false,
+        message: `${field} ${value} already exists.`,
+      });
     }
     console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
   }
 };
 

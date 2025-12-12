@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
 userSchema.pre("save", async function (next) {
   const user = this;
   if (!user.isModified("password")) {
-    next();
+    return next(); // ✅ CRITICAL FIX: Return to prevent further execution
   }
   try {
     const salt = await bcrypt.genSalt(10);
@@ -86,9 +86,14 @@ userSchema.methods.passwordCompare = async function (plainPassword) {
   const user = this;
   return await bcrypt.compare(plainPassword, user.password);
 };
-userSchema.method.compareOtp = async function (plainOtp) {
+userSchema.methods.compareOtp = async function (plainOtp) {
   const user = this;
-  return await bcrypt.compare(plainOtp, user.otp);
+  console.log("Comparing OTPs:", {
+    plainOtp: plainOtp.toString(),
+    storedOtp: user.otp,
+  });
+  console.log(this);
+  return await bcrypt.compare(plainOtp.toString(), user.otp);
 };
 
 const User = mongoose.model("User", userSchema);
