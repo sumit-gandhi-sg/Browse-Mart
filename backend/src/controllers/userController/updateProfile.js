@@ -5,7 +5,7 @@ const updateProfile = async (req, res, next) => {
     const { email, name, phoneNumber, address } = req?.body;
     const foundedUser = req?.user;
     const user = req?.body;
-    emailExist = await User?.findOne({ email: email });
+    const emailExist = await User?.findOne({ email: email });
     if (
       emailExist &&
       emailExist?._id?.toString() !== foundedUser?._id?.toString()
