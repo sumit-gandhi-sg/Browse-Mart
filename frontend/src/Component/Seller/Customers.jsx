@@ -16,7 +16,10 @@ const Customers = () => {
   const [customerRange, setCustomerRange] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const visiblePages = Array.from({ length: totalPages }, (_, index) => index + 1)
+  const visiblePages = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1,
+  )
     .filter((page) => page >= Math.max(1, currentPage - 1))
     .filter((page) => page <= Math.min(totalPages, currentPage + 1));
 
@@ -44,7 +47,7 @@ const Customers = () => {
       });
     } catch (fetchError) {
       setError(
-        fetchError?.response?.data?.message || "Unable to fetch customers"
+        fetchError?.response?.data?.message || "Unable to fetch customers",
       );
     } finally {
       setIsLoading(false);
@@ -73,7 +76,9 @@ const Customers = () => {
     >
       <SectionTitle title="Customers" />
 
-      <p className="text-gray-500 mt-2">All distinct customers for your store</p>
+      <p className="text-gray-500 mt-2">
+        All distinct customers for your store
+      </p>
 
       <div className="mt-6 space-y-4 pb-24">
         <div className="w-full max-w-full overflow-hidden rounded-lg">
@@ -175,8 +180,8 @@ const Customers = () => {
                   page === currentPage
                     ? "bg-purple-600 text-white"
                     : theme === "dark"
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-300 text-gray-900"
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-300 text-gray-900"
                 }`}
                 key={page}
                 btntext={page}

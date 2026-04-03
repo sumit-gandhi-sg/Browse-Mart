@@ -25,24 +25,28 @@ router
   .get(userAuthentication, sellerAuthentication, getAllOrdersBySellerId);
 router
   .route("/customers")
-  .get(userAuthentication, sellerAuthentication, getDistinctCustomersBySellerId);
+  .get(
+    userAuthentication,
+    sellerAuthentication,
+    getDistinctCustomersBySellerId,
+  );
 router.patch(
   "/orders/:id/status",
   userAuthentication,
   sellerAuthentication,
-  updateOrderStatus
+  updateOrderStatus,
 );
 router.patch(
   "/product/visibilty-toggle/:id",
   userAuthentication,
   sellerAuthentication,
-  productVisibilityToggle
+  productVisibilityToggle,
 );
 router.delete(
   "/product/:id",
   userAuthentication,
   sellerAuthentication,
-  deleteProduct
+  deleteProduct,
 );
 
 export default router;
