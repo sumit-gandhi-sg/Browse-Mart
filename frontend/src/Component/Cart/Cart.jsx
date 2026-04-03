@@ -105,9 +105,7 @@ const Cart = () => {
                   product={product}
                   key={product?._id || product?.id}
                   authToken={authToken}
-                  isDataFetching={isDataFetching}
-                  setIsDataFetching={setIsDataFetching}
-                  getCartItem={getCartItem}
+                  setCartItem={setCartItem}
                 />
               );
             })}

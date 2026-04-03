@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { FaPlus, FaMinus } from "react-icons/fa6";
-import { FaRupeeSign } from "react-icons/fa";
 import axios from "axios";
 import Button from "../../LIBS/Button";
 import {
@@ -13,65 +12,68 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 const CartCard = ({
   product,
   authToken,
-  isDataFetching,
-  setIsDataFetching,
-  getCartItem,
+  setCartItem,
 }) => {
-  const [quantity, setQuantity] = useState(product?.quantity || 1);
   const { setCartCount } = useCart();
   const { theme } = useTheme();
-  // const handleIncrement = () => {
-  //   setQuantity((prevQuantity) => prevQuantity + 1);
-  // };
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // const handleDecrement = () => {
-  //   if (quantity > 1) {
-  //     setQuantity((prevQuantity) => prevQuantity - 1);
-  //   }
-  // };
   const updateCart = async (newQuantity = 0) => {
-    // setIsDataFetching((prevState) => !prevState);
-    axios({
-      method: "POST",
-      url: `${SERVER_URL}/api/user/update-cart`,
-      data: { productId: product?.id, quantity: newQuantity },
-      headers: { Authorization: `Bearer ${authToken}` },
-    })
-      .then((res) => {
-        // setIsDataFetching((prevState) => !prevState);
-        setCartCount(res?.data?.cartCount);
-        getCartItem();
-      })
-      .catch((error) => {
-        console.log(error);
-        // setIsDataFetching((prevState) => !prevState);
-        swalWithCustomConfiguration?.fire(
-          "Something went wrong!",
-          "Cant update cart",
-          "error"
-        );
+    try {
+      setIsUpdating(true);
+      const res = await axios({
+        method: "POST",
+        url: `${SERVER_URL}/api/user/update-cart`,
+        data: { productId: product?.id, quantity: newQuantity },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
+
+      setCartCount(res?.data?.cartCount);
+
+      if (newQuantity <= 0) {
+        setCartItem((prev) =>
+          prev.filter(
+            (item) =>
+              (item?.id || item?._id) !==
+              (res?.data?.removedProductId || product?.id || product?._id)
+          )
+        );
+        return;
+      }
+
+      if (res?.data?.updatedCartItem) {
+        setCartItem((prev) =>
+          prev.map((item) =>
+            (item?.id || item?._id) ===
+            (res?.data?.updatedCartItem?.id || res?.data?.updatedCartItem?._id)
+              ? { ...item, ...res?.data?.updatedCartItem }
+              : item
+          )
+        );
+      }
+    } catch (error) {
+      console.log(error);
+      swalWithCustomConfiguration?.fire(
+        "Something went wrong!",
+        "Cant update cart",
+        "error"
+      );
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleIncrement = () => {
-    setQuantity((prev) => prev + 1);
-    updateCart(quantity + 1);
+    if (isUpdating) return;
+    updateCart((product?.quantity || 1) + 1);
   };
   const handleDecrement = () => {
-    // if (quantity > 1) {
-    setQuantity((prev) => prev - 1);
-    updateCart(quantity - 1);
-    // }
+    if (isUpdating) return;
+    updateCart((product?.quantity || 1) - 1);
   };
-  //   const handleDecrement = () => {
-  //   if (quantity > 1) {
-  //     const newQty = quantity - 1;
-  //     setQuantity(newQty);
-  //     updateCart(newQty);
-  //   }
-  // };
 
   const handleRemoveClicked = () => {
+    if (isUpdating) return;
     updateCart();
   };
   return (
@@ -103,6 +105,7 @@ const CartCard = ({
               theme === "dark" ? "bg-gray-700" : "bg-gray-100"
             }  rounded mobile:hidden small-device:block bg-indigo-600 text-white  transition-all duration-300 relative`}
             onClick={handleRemoveClicked}
+            disabled={isUpdating}
           />
         </div>
       </div>
@@ -114,7 +117,7 @@ const CartCard = ({
           <span
             className={`cursor-pointer p-1 rounded-full ${
               theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-200"
-            }`}
+            } ${isUpdating ? "pointer-events-none opacity-50" : ""}`}
             onClick={handleDecrement}
           >
             <FaMinus />
@@ -123,14 +126,13 @@ const CartCard = ({
             className={`px-3 py-1 transition-all duration-300 text-center  border border-gray-600 rounded-md ${
               theme === "dark" ? "bg-gray-700 " : "bg-gray-200 "
             }`}
-            // className=" bg-blue-100 border-blue-300 border-2 px-3 py-1"
           >
             {product?.quantity}
           </span>
           <span
             className={`cursor-pointer p-1 rounded-full ${
               theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-200"
-            }`}
+            } ${isUpdating ? "pointer-events-none opacity-50" : ""}`}
             onClick={handleIncrement}
           >
             <FaPlus />
