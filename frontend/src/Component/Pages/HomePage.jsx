@@ -150,7 +150,7 @@ const HomePage = () => {
         </section>
       )}
       {/* Best Seller Items */}
-      <section
+      {/* <section
         className={`  flex flex-col gap-5 p-10 mobile:p-4 mobile:py-6 small-device:p-6 laptop:p-10  transition-all duration-300 `}
       >
         <h2 className="font-roboto text-2xl mobile:text-lg font-bold">
@@ -161,7 +161,7 @@ const HomePage = () => {
             <ProductCard product={product} key={product?.id} />
           ))}
         </div>
-      </section>
+      </section> */}
     </div>
   );
 };
