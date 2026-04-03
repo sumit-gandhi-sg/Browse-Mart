@@ -109,10 +109,10 @@ const OrdersContainer = () => {
         } transition-all duration-300`}
       >
         <div
-          className={`grid min-h-screen gap-4 w-[70%] mobile:w-full tablet:w-[70%] m-auto  mt-5 py-8 mobile:p-3 `}
+          className={`grid min-h-screen gap-4 w-full max-w-6xl m-auto mt-5 py-8 px-3 tablet:px-6`}
         >
           <h2 className=" font-roboto text-2xl font-bold">Order History</h2>
-          <div className="grid grid-cols-4 mobile:grid-cols-1  gap-3">
+          <div className="grid grid-cols-1 gap-4">
             {filtertedOrdersArr?.map((order, index) => (
               // <Link
               //   to={`/order/${order?._id || order?.id}`}
