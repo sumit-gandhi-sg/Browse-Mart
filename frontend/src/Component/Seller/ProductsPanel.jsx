@@ -336,7 +336,11 @@ export const ProductsPanel = () => {
           </p>
           <div className="flex space-x-2">
             <Button
-              className="px-3 py-1 bg-gray-300 rounded-md disabled:opacity-50"
+              className={`px-3 py-1 rounded-md disabled:opacity-50 ${
+                theme === "dark"
+                  ? "bg-gray-700 text-white"
+                  : "bg-gray-300 text-gray-900"
+              }`}
               btntext="Previous"
               onClick={() =>
                 setCurrentPage((prev) => (prev > 1 ? prev - 1 : prev))
@@ -352,7 +356,9 @@ export const ProductsPanel = () => {
                 className={`px-3 py-1 rounded-md ${
                   index + 1 === currentPage
                     ? "bg-purple-600 text-white"
-                    : "bg-gray-300"
+                    : theme === "dark"
+                    ? "bg-gray-700 text-white"
+                    : "bg-gray-300 text-gray-900"
                 } `}
                 key={index}
                 btntext={index + 1}
@@ -361,7 +367,11 @@ export const ProductsPanel = () => {
             ))}
 
             <Button
-              className="px-3 py-1 bg-gray-300 rounded-md disabled:opacity-50"
+              className={`px-3 py-1 rounded-md disabled:opacity-50 ${
+                theme === "dark"
+                  ? "bg-gray-700 text-white"
+                  : "bg-gray-300 text-gray-900"
+              }`}
               btntext="Next"
               onClick={() => {
                 setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev));
