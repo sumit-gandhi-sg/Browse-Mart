@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { RxCross2 } from "react-icons/rx";
 import { LuLogOut } from "react-icons/lu";
-import { FaUser, FaHeart } from "react-icons/fa";
+import { FaBox, FaUser, FaHeart } from "react-icons/fa";
 import { swalWithCustomConfiguration } from "../../utility/constant";
 import { useNavigate } from "react-router-dom";
-import { WishListContainer, Profile } from "./index";
+import { WishListContainer, Profile, OrdersContainer } from "./index";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
 const ProfileSlider = ({
@@ -17,11 +17,11 @@ const ProfileSlider = ({
   const { theme } = useTheme();
   const { authToken, setAuthToken } = useAuth();
   const navigate = useNavigate();
-  const [isProfileShow, setISProfileShow] = useState(true);
   const themeClass =
     theme === "dark" ? " bg-gray-900 text-white" : "bg-white text-gray-900";
   const icons = [
     { icon: FaUser, tab: "profile" },
+    { icon: FaBox, tab: "orders" },
     { icon: FaHeart, tab: "wishList" },
   ];
   const handleLogOut = () => {
@@ -49,11 +49,11 @@ const ProfileSlider = ({
   };
   return (
     <div
-      className={`h-full fixed top-0 flex ${themeClass}  right-0 w-4/12 mobile:w-full mobile:rounded-none tablet:w-4/12 tablet:rounded-l-lg shadow-md shadow-black/60 rounded-l-lg overflow-hidden transition-all duration-300  transform   ${
+      className={`h-full fixed top-0 right-0 flex ${themeClass} w-full max-w-[560px] mobile:w-full mobile:rounded-none tablet:w-[70%] laptop:w-[48%] large-device:w-[42%] tablet:rounded-l-lg shadow-md shadow-black/60 rounded-l-lg overflow-hidden transition-all duration-300 transform ${
         showProfileSlider ? "translate-x-0" : "translate-x-full"
       }`}
     >
-      <div className="h-full w-1/12 relative bg-indigo-600 max-w-[40px] min-w-[35px]  ">
+      <div className="relative h-full w-[44px] shrink-0 bg-indigo-600">
         <RxCross2
           className="relative top-2 left-[50%] translate-x-[-50%]  cursor-pointer font-extrabold text-2xl bg-white text-blue-500 rounded-full p-1 "
           onClick={() => setShowProfileSlider((prev) => !prev)}
@@ -78,14 +78,19 @@ const ProfileSlider = ({
         />
       </div>
 
-      {activeTab === "profile" && (
-        <Profile
-          userDetail={userDetail}
-          authToken={authToken}
-          setUserDetail={setUserDetail}
-        />
-      )}
-      {activeTab === "wishList" && <WishListContainer authToken={authToken} />}
+      <div className="min-w-0 flex-1">
+        {activeTab === "profile" && (
+          <Profile
+            userDetail={userDetail}
+            authToken={authToken}
+            setUserDetail={setUserDetail}
+          />
+        )}
+        {activeTab === "orders" && <OrdersContainer embedded={true} />}
+        {activeTab === "wishList" && (
+          <WishListContainer authToken={authToken} />
+        )}
+      </div>
     </div>
   );
 };

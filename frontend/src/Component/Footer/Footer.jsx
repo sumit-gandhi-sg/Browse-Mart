@@ -47,7 +47,10 @@ const Footer = ({ userDetail }) => {
         <div>
           <h3 className="text-white text-lg font-semibold">Customer Service</h3>
           <ul className="mt-2 space-y-2 text-sm">
-            <li className="hover:text-white cursor-pointer">My Account</li>
+            <li className="hover:text-white cursor-pointer">
+              {" "}
+              <Link to={"/profile"}>My Account</Link>
+            </li>
             <li className="hover:text-white cursor-pointer">
               <Link to={"/orders"}>View Orders</Link>
             </li>
