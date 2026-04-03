@@ -18,14 +18,18 @@ const submitOrder = async (req, res, next) => {
         if (!activeUser) return;
         if (!shippingAddress?.isDefaultShippingAddress) return;
         if (!shippingAddress) return "Shipping Address is required";
-        activeUser.shippingAddress = {
+        const normalizedAddress = {
           addressLine1: shippingAddress?.addressLine1?.trim(),
-          addressLine2: shippingAddress?.addressLine2?.trim() || "",
+          addressLine2:
+            shippingAddress?.addressLine2?.trim() ||
+            shippingAddress?.adressLine2?.trim() ||
+            "",
           state: shippingAddress?.state?.trim(),
           city: shippingAddress?.city?.trim(),
           pinCode: shippingAddress?.pinCode?.trim(),
           country: shippingAddress?.country?.trim(),
         };
+        activeUser.shippingAddress = normalizedAddress;
         return true;
       } catch (error) {
         console.error(" line 29", error);
