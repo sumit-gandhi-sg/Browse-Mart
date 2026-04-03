@@ -17,6 +17,9 @@ const Orders = () => {
   const [orderRange, setOrderRange] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const visiblePages = Array.from({ length: totalPages }, (_, index) => index + 1)
+    .filter((page) => page >= Math.max(1, currentPage - 1))
+    .filter((page) => page <= Math.min(totalPages, currentPage + 1));
 
   const getSellerOrders = async () => {
     try {
@@ -63,7 +66,7 @@ const Orders = () => {
 
   return (
     <div
-      className={`${
+      className={`w-full max-w-full overflow-x-hidden ${
         theme === "dark" ? "text-white" : "text-gray-900"
       } transition-all duration-300`}
     >
@@ -87,18 +90,18 @@ const Orders = () => {
           No orders found for your products yet.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-24">
           {orders.map((order) => (
             <div
               key={order?._id || order?.orderId}
-              className={`rounded-lg border p-4 ${
+              className={`w-full max-w-full overflow-hidden rounded-lg border p-4 ${
                 theme === "dark"
                   ? "border-gray-700 bg-gray-800"
                   : "border-gray-200 bg-white"
               }`}
             >
-              <div className="flex flex-col gap-4 small-device:flex-row small-device:items-start small-device:justify-between">
-                <div className="space-y-2">
+              <div className="flex min-w-0 flex-col gap-4 small-device:flex-row small-device:items-start small-device:justify-between">
+                <div className="min-w-0 space-y-2">
                   <p className="font-semibold text-lg">
                     Order #{order?.orderId}
                   </p>
@@ -111,7 +114,7 @@ const Orders = () => {
                   </p>
                 </div>
 
-                <div className="text-sm small-device:text-right">
+                <div className="text-sm small-device:text-right small-device:flex-shrink-0">
                   <p className="font-medium">
                     Total: {formatNumber(order?.grandTotal)}
                   </p>
@@ -120,7 +123,7 @@ const Orders = () => {
               </div>
 
               <div className="mt-4 grid gap-3 small-device:grid-cols-2">
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium mb-1">Customer</p>
                   <p>{order?.customerDetails?.name}</p>
                   <p className="text-sm text-gray-500">
@@ -131,7 +134,7 @@ const Orders = () => {
                   </p>
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium mb-1">Shipping Address</p>
                   <p>{order?.shippingAddress?.addressLine1}</p>
                   {order?.shippingAddress?.addressLine2 ? (
@@ -152,8 +155,8 @@ const Orders = () => {
                 </div>
               </div>
 
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              <div className="mt-4 w-full max-w-full overflow-x-auto">
+                <table className="min-w-[640px] w-full border-collapse text-left">
                   <thead>
                     <tr
                       className={
@@ -215,12 +218,18 @@ const Orders = () => {
             </div>
           ))}
 
-          <div className="mt-4 flex items-center justify-between mobile:flex-col small-device:flex-row mobile:gap-4 small-device:gap-0">
+          <div
+            className={`sticky bottom-0 z-10 mt-4 flex items-center justify-between gap-4 border-t px-3 py-3 mobile:flex-col small-device:flex-row ${
+              theme === "dark"
+                ? "border-gray-700 bg-gray-900/95"
+                : "border-gray-200 bg-gray-100/95"
+            } backdrop-blur`}
+          >
             <p className="text-gray-500">
               Showing {orderRange?.startOrderIndex} to{" "}
               {orderRange?.endOrderIndex} of {orderCount} results
             </p>
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap justify-center gap-2">
               <Button
                 className={`px-3 py-1 rounded-md disabled:opacity-50 ${
                   theme === "dark"
@@ -234,20 +243,52 @@ const Orders = () => {
                 disabled={currentPage === 1}
               />
 
-              {[...Array(totalPages)].map((item, index) => (
+              {currentPage > 2 && (
+                <>
+                  <Button
+                    className={`px-3 py-1 rounded-md ${
+                      theme === "dark"
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-300 text-gray-900"
+                    }`}
+                    btntext={1}
+                    onClick={() => setCurrentPage(1)}
+                  />
+                  {currentPage > 3 && <span className="px-1 py-1">...</span>}
+                </>
+              )}
+
+              {visiblePages.map((page) => (
                 <Button
                   className={`px-3 py-1 rounded-md ${
-                    index + 1 === currentPage
+                    page === currentPage
                       ? "bg-purple-600 text-white"
                       : theme === "dark"
                       ? "bg-gray-700 text-white"
                       : "bg-gray-300 text-gray-900"
                   }`}
-                  key={index}
-                  btntext={index + 1}
-                  onClick={() => setCurrentPage(index + 1)}
+                  key={page}
+                  btntext={page}
+                  onClick={() => setCurrentPage(page)}
                 />
               ))}
+
+              {currentPage < totalPages - 1 && (
+                <>
+                  {currentPage < totalPages - 2 && (
+                    <span className="px-1 py-1">...</span>
+                  )}
+                  <Button
+                    className={`px-3 py-1 rounded-md ${
+                      theme === "dark"
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-300 text-gray-900"
+                    }`}
+                    btntext={totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                  />
+                </>
+              )}
 
               <Button
                 className={`px-3 py-1 rounded-md disabled:opacity-50 ${

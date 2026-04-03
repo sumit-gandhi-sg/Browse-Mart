@@ -88,12 +88,12 @@ const SellerLayout = () => {
         theme === "dark"
           ? "bg-gray-900 text-white"
           : "bg-gray-100 text-gray-900"
-      } h-screen pb-4 transition-all duration-300 mobile:text-xs tablet:text-base flex font-roboto `}
+      } h-screen overflow-hidden transition-all duration-300 mobile:text-xs tablet:text-base flex font-roboto `}
     >
       {/* Sidebar */}
       <SideBar activeTab={activeTab} setActiveTab={setActiveTab} tabs={tabs} />
       {/* Main Content */}
-      <div className="flex-1 p-6 mobile:p-1 tablet:p-6 transition-all duration-300 h-screen overflow-y-scroll">
+      <div className="flex-1 p-6 mobile:p-1 tablet:p-6 transition-all duration-300 overflow-y-auto overscroll-contain">
         <Outlet />
       </div>
     </div>

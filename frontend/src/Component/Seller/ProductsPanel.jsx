@@ -25,6 +25,9 @@ export const ProductsPanel = () => {
   const { theme } = useTheme();
   const { authToken } = useAuth();
   let tempSearchQuery = "";
+  const visiblePages = Array.from({ length: totalPages }, (_, index) => index + 1)
+    .filter((page) => page >= Math.max(1, currentPage - 1))
+    .filter((page) => page <= Math.min(totalPages, currentPage + 1));
   const getAllProduct = async () => {
     setIsDataFetching(true);
     try {
@@ -119,7 +122,7 @@ export const ProductsPanel = () => {
 
   return (
     <div
-      className={`${
+      className={`w-full max-w-full overflow-x-hidden ${
         theme === "dark"
           ? "bg-gray-900 text-white"
           : "bg-gray-100 text-gray-900"
@@ -186,10 +189,10 @@ export const ProductsPanel = () => {
           />
         </div>
 
-        {/* Products Table */}
-        <div className="mt-6">
-          <div className="overflow-x-auto overflow-scroll w-full">
-            <table className="w-full text-left border-collapse ">
+        <div className="mt-6 space-y-4 pb-24">
+          <div className="w-full max-w-full overflow-hidden rounded-lg">
+            <div className="w-full max-w-full overflow-x-auto">
+              <table className="min-w-[760px] w-full text-left border-collapse ">
               <thead>
                 <tr
                   className={`${
@@ -207,177 +210,199 @@ export const ProductsPanel = () => {
                   <th className="p-3">Actions</th>
                 </tr>
               </thead>
-              <tbody className="w-full h-full">
-                {productArr.map((product) => (
-                  <tr key={product?._id} className="border-b h-full">
-                    <td className="p-3 flex items-center w-max">
-                      {/* <span className="text-2xl mr-2">
-                        {product?.image?.[0]}
-                      </span> */}
-                      <img
-                        src={product?.image?.[0]}
-                        alt=""
-                        className="w-20 h-20 rounded-md m-3 object-cover "
-                      />
-                      <div className="flex-1">
-                        <p className="font-semibold max-w-56 line-clamp-1">
-                          {product?.name}
-                        </p>
-                        <p className="text-sm text-gray-500 w-min">
-                          {product?._id}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="p-3">{product?.category?.toCapitalize()}</td>
-                    <td className="p-3">{product?.stock}</td>
-                    <td className="p-3">
-                      <ToggleSwitch
-                        visibiltyState={!product?.isHide}
-                        onToggle={async (state) => {
-                          try {
-                            console.log(state);
-                            const response = await axios.patch(
-                              `${SERVER_URL}/api/seller/product/visibilty-toggle/${product?._id}`,
-                              { state },
-                              {
-                                headers: {
-                                  "Content-Type":
-                                    "application/json; charset=UTF-8",
-                                  Authorization: `Bearer ${authToken}`,
-                                },
-                              }
-                            );
-                          } catch (error) {
-                            console.log(error);
-                          }
-                        }}
-                      />
-                    </td>
-
-                    <td className="p-3">
-                      {formatNumber(product?.price || product?.mrpPrice)}
-                    </td>
-                    <td
-                      className={`p-3 font-semibold w-max ${
-                        product?.stock > 20
-                          ? "text-green-500"
-                          : product?.stock > 0
-                          ? "text-yellow-500"
-                          : "text-red-500"
-                        // product.stock === "In Stock"
-                        //   ? "text-green-500"
-                        //   : "text-yellow-500"
-                      }`}
-                    >
-                      {product?.stock > 20
-                        ? "In Stock"
-                        : product?.stock > 0
-                        ? "Low Stock"
-                        : "Out of Stock"}
-                    </td>
-                    <td className="p-3">
-                      {/* Edit product UI is intentionally hidden until edit functionality is supported. */}
-                      {/* <Button className="text-blue-500" btntext="Edit" /> */}
-                      <Button
-                        className={`p-2 rounded-md border transition-all duration-300 disabled:opacity-50 ${
-                          theme === "dark"
-                            ? "border-red-500/40 text-red-300 hover:bg-red-500/10"
-                            : "border-red-200 text-red-600 hover:bg-red-50"
-                        }`}
-                        btntext=""
-                        icon={
-                          deletingProductId === product?._id ? (
-                            <BiLoaderAlt className="animate-spin text-base" />
-                          ) : (
-                            <FaTrash className="text-sm" />
-                          )
-                        }
-                        onClick={() => handleDeleteProduct(product?._id)}
-                        disabled={deletingProductId === product?._id}
-                      />
-                    </td>
-                  </tr>
-                ))}
-                {productArr?.length === 0 && !isDataFetching && (
-                  <tr className=" text-center">
-                    <td colSpan="7" className="p-5">
-                      {/* <div className="flex items-center justify-center h-full">
+                <tbody className="w-full h-full">
+                  {productArr.map((product) => (
+                    <tr key={product?._id} className="border-b h-full">
+                      <td className="p-3 flex items-center w-max">
                         <img
-                          src="/images/empty.png"
-                          alt="No Data"
-                          className="w-20 h-20"
+                          src={product?.image?.[0]}
+                          alt=""
+                          className="w-20 h-20 rounded-md m-3 object-cover "
                         />
-                      </div> */}
-                      Nothing to Display
-                    </td>
-                    {/* <td></td> */}
-                  </tr>
-                )}
-                {isDataFetching && (
-                  <tr className="">
-                    <td colSpan="7" className="p-5">
-                      <div className="w-full flex justify-center gap-2">
-                        <BiLoaderAlt className="animate-spin h-6 w-6 " />
-                        <span>Loading...</span>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                        <div className="flex-1">
+                          <p className="font-semibold max-w-56 line-clamp-1">
+                            {product?.name}
+                          </p>
+                          <p className="text-sm text-gray-500 w-min">
+                            {product?._id}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="p-3">{product?.category?.toCapitalize()}</td>
+                      <td className="p-3">{product?.stock}</td>
+                      <td className="p-3">
+                        <ToggleSwitch
+                          visibiltyState={!product?.isHide}
+                          onToggle={async (state) => {
+                            try {
+                              await axios.patch(
+                                `${SERVER_URL}/api/seller/product/visibilty-toggle/${product?._id}`,
+                                { state },
+                                {
+                                  headers: {
+                                    "Content-Type":
+                                      "application/json; charset=UTF-8",
+                                    Authorization: `Bearer ${authToken}`,
+                                  },
+                                }
+                              );
+                            } catch (error) {
+                              console.log(error);
+                            }
+                          }}
+                        />
+                      </td>
+
+                      <td className="p-3">
+                        {formatNumber(product?.price || product?.mrpPrice)}
+                      </td>
+                      <td
+                        className={`p-3 font-semibold w-max ${
+                          product?.stock > 20
+                            ? "text-green-500"
+                            : product?.stock > 0
+                            ? "text-yellow-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {product?.stock > 20
+                          ? "In Stock"
+                          : product?.stock > 0
+                          ? "Low Stock"
+                          : "Out of Stock"}
+                      </td>
+                      <td className="p-3">
+                        {/* Edit product UI is intentionally hidden until edit functionality is supported. */}
+                        {/* <Button className="text-blue-500" btntext="Edit" /> */}
+                        <Button
+                          className={`p-2 rounded-md border transition-all duration-300 disabled:opacity-50 ${
+                            theme === "dark"
+                              ? "border-red-500/40 text-red-300 hover:bg-red-500/10"
+                              : "border-red-200 text-red-600 hover:bg-red-50"
+                          }`}
+                          btntext=""
+                          icon={
+                            deletingProductId === product?._id ? (
+                              <BiLoaderAlt className="animate-spin text-base" />
+                            ) : (
+                              <FaTrash className="text-sm" />
+                            )
+                          }
+                          onClick={() => handleDeleteProduct(product?._id)}
+                          disabled={deletingProductId === product?._id}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                  {productArr?.length === 0 && !isDataFetching && (
+                    <tr className=" text-center">
+                      <td colSpan="7" className="p-5">
+                        Nothing to Display
+                      </td>
+                    </tr>
+                  )}
+                  {isDataFetching && (
+                    <tr className="">
+                      <td colSpan="7" className="p-5">
+                        <div className="w-full flex justify-center gap-2">
+                          <BiLoaderAlt className="animate-spin h-6 w-6 " />
+                          <span>Loading...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        {/* Pagination */}
-        <div className="mt-4 flex items-center justify-between mobile:flex-col small-device:flex-row mobile:gap-4 small-device:gap-0">
-          <p className="text-gray-500">
-            Showing {productRange?.startProductIndex} to{" "}
-            {productRange?.endProductIndex} of {productCount} results
-          </p>
-          <div className="flex space-x-2">
-            <Button
-              className={`px-3 py-1 rounded-md disabled:opacity-50 ${
-                theme === "dark"
-                  ? "bg-gray-700 text-white"
-                  : "bg-gray-300 text-gray-900"
-              }`}
-              btntext="Previous"
-              onClick={() =>
-                setCurrentPage((prev) => (prev > 1 ? prev - 1 : prev))
-              }
-              disabled={currentPage === 1}
-            />
-            {/* <button className="px-3 py-1 bg-gray-300 rounded-md">
-              Previous
-            </button> */}
-
-            {[...Array(totalPages)].map((item, index) => (
+          <div
+            className={`sticky bottom-0 z-10 mt-4 flex items-center justify-between gap-4 border-t px-3 py-3 mobile:flex-col small-device:flex-row ${
+              theme === "dark"
+                ? "border-gray-700 bg-gray-900/95"
+                : "border-gray-200 bg-gray-100/95"
+            } backdrop-blur`}
+          >
+            <p className="text-gray-500">
+              Showing {productRange?.startProductIndex} to{" "}
+              {productRange?.endProductIndex} of {productCount} results
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
               <Button
-                className={`px-3 py-1 rounded-md ${
-                  index + 1 === currentPage
-                    ? "bg-purple-600 text-white"
-                    : theme === "dark"
+                className={`px-3 py-1 rounded-md disabled:opacity-50 ${
+                  theme === "dark"
                     ? "bg-gray-700 text-white"
                     : "bg-gray-300 text-gray-900"
-                } `}
-                key={index}
-                btntext={index + 1}
-                onClick={() => setCurrentPage(index + 1)}
+                }`}
+                btntext="Previous"
+                onClick={() =>
+                  setCurrentPage((prev) => (prev > 1 ? prev - 1 : prev))
+                }
+                disabled={currentPage === 1}
               />
-            ))}
 
-            <Button
-              className={`px-3 py-1 rounded-md disabled:opacity-50 ${
-                theme === "dark"
-                  ? "bg-gray-700 text-white"
-                  : "bg-gray-300 text-gray-900"
-              }`}
-              btntext="Next"
-              onClick={() => {
-                setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev));
-              }}
-              disabled={currentPage === totalPages}
-            />
+              {currentPage > 2 && (
+                <>
+                  <Button
+                    className={`px-3 py-1 rounded-md ${
+                      theme === "dark"
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-300 text-gray-900"
+                    }`}
+                    btntext={1}
+                    onClick={() => setCurrentPage(1)}
+                  />
+                  {currentPage > 3 && <span className="px-1 py-1">...</span>}
+                </>
+              )}
+
+              {visiblePages.map((page) => (
+                <Button
+                  className={`px-3 py-1 rounded-md ${
+                    page === currentPage
+                      ? "bg-purple-600 text-white"
+                      : theme === "dark"
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-300 text-gray-900"
+                  }`}
+                  key={page}
+                  btntext={page}
+                  onClick={() => setCurrentPage(page)}
+                />
+              ))}
+
+              {currentPage < totalPages - 1 && (
+                <>
+                  {currentPage < totalPages - 2 && (
+                    <span className="px-1 py-1">...</span>
+                  )}
+                  <Button
+                    className={`px-3 py-1 rounded-md ${
+                      theme === "dark"
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-300 text-gray-900"
+                    }`}
+                    btntext={totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                  />
+                </>
+              )}
+
+              <Button
+                className={`px-3 py-1 rounded-md disabled:opacity-50 ${
+                  theme === "dark"
+                    ? "bg-gray-700 text-white"
+                    : "bg-gray-300 text-gray-900"
+                }`}
+                btntext="Next"
+                onClick={() => {
+                  setCurrentPage((prev) =>
+                    prev < totalPages ? prev + 1 : prev
+                  );
+                }}
+                disabled={currentPage === totalPages}
+              />
+            </div>
           </div>
         </div>
       </main>
