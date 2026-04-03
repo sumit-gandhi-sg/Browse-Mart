@@ -2,7 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Productcard from "./ProductCard";
-import { Loader, ServerError } from "../../LIBS";
+import { Button, Loader, ServerError } from "../../LIBS";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
 import noResultImage from "../../assets/images/noResult.png";
@@ -20,8 +20,18 @@ const ProductsContainer = () => {
   const [allCategories, SetAllCategories] = useState();
   const [filteredProduct, SetFilteredProduct] = useState();
   const [filteredCategory, SetFilteredCategory] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [productCount, setProductCount] = useState(0);
+  const [productRange, setProductRange] = useState({});
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [error, setError] = useState({});
+  const visiblePages = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1,
+  )
+    .filter((page) => page >= Math.max(1, currentPage - 1))
+    .filter((page) => page <= Math.min(totalPages, currentPage + 1));
   const searchQuery = new URLSearchParams(location?.search)
     ?.get("q")
     ?.toString()
@@ -46,7 +56,7 @@ const ProductsContainer = () => {
     let filter = [];
     filteredCategory.forEach((category) => {
       const products = allProduct?.filter((item) =>
-        item.category.includes(category)
+        item.category.includes(category),
       );
       filter = [...filter, ...products];
     });
@@ -55,13 +65,24 @@ const ProductsContainer = () => {
   const getAllProduct = () => {
     axios
       .get(`${SERVER_URL}/api/product/get-all-products`, {
-        params: { activeUserId: userDetail?.id, searchQuery, searchCategory },
+        params: {
+          activeUserId: userDetail?.id,
+          searchQuery,
+          searchCategory,
+          page: currentPage,
+        },
       })
       .then((response) => {
         const { data, status } = response;
         if (status === 200) {
           SetAllProduct(data?.products);
           SetFilteredProduct(data?.products);
+          setTotalPages(data?.totalPages || 1);
+          setProductCount(data?.totalProducts || 0);
+          setProductRange({
+            startProductIndex: data?.startProductIndex || 0,
+            endProductIndex: data?.endProductIndex || 0,
+          });
         }
       })
       .catch((error) => {
@@ -103,10 +124,15 @@ const ProductsContainer = () => {
     //   .catch((error) => console.log(error));
     getAllProduct();
     // getAllCategory();
-  }, [userDetail?.id, searchQuery, searchCategory]);
+  }, [userDetail?.id, searchQuery, searchCategory, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, searchCategory]);
+
   useEffect(() => {
     window.scrollTo(0, 0); // Scroll to the top on component mount
-  }, []);
+  }, [currentPage]);
   if (error.errorMessage) {
     return <ServerError />;
   }
@@ -142,7 +168,7 @@ const ProductsContainer = () => {
   return (
     filteredProduct && (
       <div
-        className={`product-container w-full h-full items-center justify-center pt-8 flex gap-2 p-4 ${
+        className={`product-container w-full h-full items-center justify-center pt-8 flex flex-col gap-2 p-4 ${
           theme === "dark"
             ? " bg-gray-900 text-white"
             : "bg-white text-gray-900"
@@ -183,7 +209,10 @@ const ProductsContainer = () => {
           {filteredProduct &&
             filteredProduct.map((product, index) => {
               return (
-                <div className="w-full h-full" key={product?.id || product?._id}>
+                <div
+                  className="w-full h-full"
+                  key={product?.id || product?._id}
+                >
                   <Productcard
                     product={product}
                     userDetail={userDetail}
@@ -192,6 +221,93 @@ const ProductsContainer = () => {
                 </div>
               );
             })}
+        </div>
+
+        <div
+          className={`sticky bottom-0 z-10 mt-4 w-full flex items-center justify-between gap-4 border-t px-3 py-3 mobile:flex-col small-device:flex-row ${
+            theme === "dark"
+              ? "border-gray-700 bg-gray-900/95"
+              : "border-gray-200 bg-gray-100/95"
+          } backdrop-blur`}
+        >
+          <p className="text-gray-500">
+            Showing {productRange?.startProductIndex} to{" "}
+            {productRange?.endProductIndex} of {productCount} results
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button
+              className={`px-3 py-1 rounded-md disabled:opacity-50 ${
+                theme === "dark"
+                  ? "bg-gray-700 text-white"
+                  : "bg-gray-300 text-gray-900"
+              }`}
+              btntext="Previous"
+              onClick={() =>
+                setCurrentPage((prev) => (prev > 1 ? prev - 1 : prev))
+              }
+              disabled={currentPage === 1}
+            />
+
+            {currentPage > 2 && (
+              <>
+                <Button
+                  className={`px-3 py-1 rounded-md ${
+                    theme === "dark"
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-300 text-gray-900"
+                  }`}
+                  btntext={1}
+                  onClick={() => setCurrentPage(1)}
+                />
+                {currentPage > 3 && <span className="px-1 py-1">...</span>}
+              </>
+            )}
+
+            {visiblePages.map((page) => (
+              <Button
+                className={`px-3 py-1 rounded-md ${
+                  page === currentPage
+                    ? "bg-purple-600 text-white"
+                    : theme === "dark"
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-300 text-gray-900"
+                }`}
+                key={page}
+                btntext={page}
+                onClick={() => setCurrentPage(page)}
+              />
+            ))}
+
+            {currentPage < totalPages - 1 && (
+              <>
+                {currentPage < totalPages - 2 && (
+                  <span className="px-1 py-1">...</span>
+                )}
+                <Button
+                  className={`px-3 py-1 rounded-md ${
+                    theme === "dark"
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-300 text-gray-900"
+                  }`}
+                  btntext={totalPages}
+                  onClick={() => setCurrentPage(totalPages)}
+                />
+              </>
+            )}
+
+            <Button
+              className={`px-3 py-1 rounded-md disabled:opacity-50 ${
+                theme === "dark"
+                  ? "bg-gray-700 text-white"
+                  : "bg-gray-300 text-gray-900"
+              }`}
+              btntext="Next"
+              onClick={() =>
+                setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev))
+              }
+              disabled={currentPage === totalPages}
+            />
+          </div>
         </div>
       </div>
     )

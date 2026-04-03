@@ -191,7 +191,7 @@ const ProductCard = ({ product }) => {
           <p className="text-lg font-semibold   product-name w-full text-ellipsis overflow-hidden whitespace-nowrap font-roboto  hover:text-gray-400 mobile:text-lg laptop:text-2xl ">
             {name}
           </p>
-          {rating && rating !== null && (
+          {!!rating && (
             <>
               <div className="flex gap-1">
                 <div className="flex">
