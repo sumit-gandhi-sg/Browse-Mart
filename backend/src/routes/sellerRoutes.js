@@ -11,6 +11,7 @@ import productVisibilityToggle from "../controllers/sellerController/productVisi
 import deleteProduct from "../controllers/sellerController/deleteProduct.js";
 import getAllOrdersBySellerId from "../controllers/sellerController/getAllOrdersBySellerId.js";
 import updateOrderStatus from "../controllers/sellerController/updateOrderStatus.js";
+import getDistinctCustomersBySellerId from "../controllers/sellerController/getDistinctCustomersBySellerId.js";
 
 router.route("/register").post(userAuthentication, sellerRegistration);
 router
@@ -22,6 +23,9 @@ router
 router
   .route("/orders")
   .get(userAuthentication, sellerAuthentication, getAllOrdersBySellerId);
+router
+  .route("/customers")
+  .get(userAuthentication, sellerAuthentication, getDistinctCustomersBySellerId);
 router.patch(
   "/orders/:id/status",
   userAuthentication,
