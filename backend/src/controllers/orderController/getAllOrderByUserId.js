@@ -39,9 +39,12 @@ const getAllOrderByUserId = async (req, res, next) => {
                   productImage: productData?.image?.[0],
                   productDescription: productData?.description,
                 };
-              })
+              }),
             ),
-            totalAmount: filteredOrderArr?.totalAmount,
+            totalAmount:
+              filteredOrderArr?.totalAmount ||
+              filteredOrderArr?.grandTotal ||
+              0,
           };
 
           return orderDetails;
@@ -49,7 +52,7 @@ const getAllOrderByUserId = async (req, res, next) => {
           console.error("Error processing order item:", err);
           return null;
         }
-      })
+      }),
     );
 
     // Filter out any null values in case of missing orders or errors

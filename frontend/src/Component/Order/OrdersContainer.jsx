@@ -64,15 +64,15 @@ const OrdersContainer = () => {
           const dateA = new Date(
             a?.orderDate?.year,
             a?.orderDate?.month - 1,
-            a?.orderDate?.day
+            a?.orderDate?.day,
           );
           const dateB = new Date(
             b?.orderDate?.year,
             b?.orderDate?.month - 1,
-            b?.orderDate?.day
+            b?.orderDate?.day,
           );
           return dateB - dateA;
-        })
+        }),
       );
     }
   }, [ordersArr]);
