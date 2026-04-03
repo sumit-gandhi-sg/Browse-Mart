@@ -8,6 +8,7 @@ import sellerRegistration from "../controllers/sellerController/sellerRegistrati
 import dashBoard from "../controllers/sellerController/dashBoard.js";
 import getAllProductUsingSellerId from "../controllers/sellerController/getAllProductUsingSellerId.js";
 import productVisibilityToggle from "../controllers/sellerController/productVisibilityToggle.js";
+import deleteProduct from "../controllers/sellerController/deleteProduct.js";
 
 router.route("/register").post(userAuthentication, sellerRegistration);
 router
@@ -21,6 +22,12 @@ router.patch(
   userAuthentication,
   sellerAuthentication,
   productVisibilityToggle
+);
+router.delete(
+  "/product/:id",
+  userAuthentication,
+  sellerAuthentication,
+  deleteProduct
 );
 
 export default router;
