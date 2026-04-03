@@ -3,13 +3,17 @@ import Product from "../../model/productSchema.js";
 
 const getAllOrderByUserId = async (req, res, next) => {
   try {
-    const orderItems = req?.user?.order;
     const activeUser = req?.user;
+    const { page = 1, limit = 5 } = req?.query;
 
     // Validate input data
-    if (!orderItems || !activeUser) {
+    if (!activeUser) {
       return res.status(400).json({ message: "Invalid user or order data" });
     }
+
+    const parsedPage = Number(page) > 0 ? Number(page) : 1;
+    const parsedLimit = Number(limit) > 0 ? Number(limit) : 5;
+    const skip = (parsedPage - 1) * parsedLimit;
 
     // Helper function to format dates
     const formatDate = (originalDate) => {
@@ -17,12 +21,21 @@ const getAllOrderByUserId = async (req, res, next) => {
       return { day, month, year };
     };
 
-    // Fetch and process all orders
+    const query = { customerId: activeUser?._id };
+    const totalCount = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / parsedLimit);
+
+    const paginatedOrders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parsedLimit)
+      .lean();
+
+    // Fetch and process current page orders
     const ordersArr = await Promise.all(
-      orderItems?.map(async (orderItem) => {
+      paginatedOrders?.map(async (filteredOrderArr) => {
         try {
-          const filteredOrderArr = await Order.findById(orderItem?.orderId);
-          if (!filteredOrderArr) return null; // Handle missing orders
+          if (!filteredOrderArr) return null;
 
           // Process each order
           const orderDetails = {
@@ -57,11 +70,18 @@ const getAllOrderByUserId = async (req, res, next) => {
 
     // Filter out any null values in case of missing orders or errors
     const validOrders = ordersArr.filter((order) => order !== null);
+    const start = totalCount === 0 ? 0 : skip + 1;
+    const end = Math.min(skip + validOrders.length, totalCount);
 
     // Return the processed orders
     res.status(200).json({
       message: "All orders fetched successfully!",
       ordersArr: validOrders,
+      totalOrders: totalCount,
+      page: parsedPage,
+      totalPages,
+      startOrderIndex: start,
+      endOrderIndex: end,
     });
   } catch (err) {
     console.error("Error fetching all orders:", err);
