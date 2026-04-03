@@ -300,16 +300,13 @@ const ProductPage = () => {
               {relatedProduct.length > 0 &&
                 relatedProduct.map((product, index) => {
                   return (
-                    <Link
-                      to={`/product/${product?.id || product?._id}`}
-                      key={product?.id || product?._id}
-                    >
+                    <div key={product?.id || product?._id}>
                       <ProductCard
                         product={product}
                         authToken={authToken}
                         userDetail={userDetail}
                       />
-                    </Link>
+                    </div>
                   );
                 })}
             </div>

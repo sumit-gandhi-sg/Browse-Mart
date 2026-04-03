@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Productcard from "./ProductCard";
 import { Loader, ServerError } from "../../LIBS";
 import { useTheme } from "../../Context/themeContext";
@@ -183,19 +183,13 @@ const ProductsContainer = () => {
           {filteredProduct &&
             filteredProduct.map((product, index) => {
               return (
-                <Link
-                  to={"/product/" + (product?.id || product?._id)}
-                  className="w-full h-full "
-                  key={product?.id || product?._id}
-                >
-                  {/* <div className="flex w-full justify-center"> */}
+                <div className="w-full h-full" key={product?.id || product?._id}>
                   <Productcard
                     product={product}
                     userDetail={userDetail}
                     authToken={authToken}
                   />
-                  {/* </div> */}
-                </Link>
+                </div>
               );
             })}
         </div>

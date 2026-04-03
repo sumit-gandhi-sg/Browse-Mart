@@ -8,16 +8,18 @@ import axios from "axios";
 import { swalWithCustomConfiguration } from "../../../utility/constant";
 import { Toast } from "../../../utility/constant";
 import Swal from "sweetalert2";
+import { useAuth } from "../../../Context/authContext";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 //form direct action config
 // action={`${SERVER_URL}${isSignUpShow ? "/create-user" : ""}`}
 // method={`${isSignUpShow ? "post" : "get"}`
 
-const LoginPage = ({ authToken, setAuthToken }) => {
+const LoginPage = () => {
   const location = useLocation();
   const [islogining, setIslogining] = useState(false);
   const navigate = useNavigate();
   const [isSignUpShow, setIsSignUpShow] = useState(false);
+  const { authToken, setAuthToken } = useAuth();
   const guestUser = {
     email: "guest@gmail.com",
     password: "guestuser",

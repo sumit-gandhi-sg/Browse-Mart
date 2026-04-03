@@ -1,5 +1,6 @@
 import Button from "../../LIBS/Button";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { formatNumber } from "../../utility/constant";
 // import { FaRegHeart } from "react-icons/fa";
 // import { FaHeart } from "react-icons/fa";
@@ -149,12 +150,18 @@ const ProductCard = ({ product }) => {
   // const [isFavorite, setIsFavorite] = useState(false);
   const { authToken } = useAuth();
   const { userDetail } = useUser();
+  const navigate = useNavigate();
+
+  const handleCardClick = () => {
+    navigate(`/product/${id}`);
+  };
 
   return (
     <div
-      className={` max-w-xs   h-full flex flex-col relative rounded-2xl shadow-lg overflow-hidden border ${
+      className={`max-w-xs h-full flex flex-col relative rounded-2xl shadow-lg overflow-hidden border cursor-pointer ${
         theme === "dark" ? "bg-gray-800" : "bg-gray-100"
-      } transition-all duration-300  `}
+      } transition-all duration-300`}
+      onClick={handleCardClick}
     >
       <div className="relative">
         {/* <img src={image} alt={name} className="w-full h-48 object-cover" /> */}

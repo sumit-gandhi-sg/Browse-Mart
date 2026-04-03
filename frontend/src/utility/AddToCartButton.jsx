@@ -48,7 +48,8 @@ const AddToCartButton = ({ userDetail, productId, authToken, className }) => {
       if (status === 200) {
         setIsProductAdding(false);
         setCartCount(() => data?.cartCount);
-        const response = await swalWithCustomConfiguration.fire({
+        let shouldNavigateToCart = false;
+        await swalWithCustomConfiguration.fire({
           title: "Product Added!",
           text: "Your product has been added to the cart. You can proceed to checkout.",
           icon: "success",
@@ -56,10 +57,15 @@ const AddToCartButton = ({ userDetail, productId, authToken, className }) => {
           cancelButtonText: "Continue Shopping",
           showCancelButton: true,
           reverseButtons: true,
+          preConfirm: () => {
+            shouldNavigateToCart = true;
+          },
+          didClose: () => {
+            if (shouldNavigateToCart) {
+              navigate("/cart");
+            }
+          },
         });
-        if (response?.isConfirmed) {
-          setTimeout(() => navigate("/cart"), 200);
-        }
       } else return;
     } catch (error) {
       console?.log(error);
