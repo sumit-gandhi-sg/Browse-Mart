@@ -20,6 +20,7 @@ const getAllProductUsingSellerId = async (req, res) => {
     const totalCount = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalCount / Number(limit));
     const allProduct = await Product?.find(query)
+      .sort({ _id: -1 })
       .skip(skip)
       .limit(limit)
       .select("-review -description -__v");

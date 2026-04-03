@@ -20,7 +20,7 @@ const getAllOrdersBySellerId = async (req, res) => {
     const totalPages = Math.ceil(totalCount / Number(limit));
 
     const orders = await Order.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .skip(skip)
       .limit(Number(limit))
       .lean();
@@ -42,7 +42,7 @@ const getAllOrdersBySellerId = async (req, res) => {
               productImage: product?.image?.[0] || "",
               productDescription: product?.description || "",
             };
-          })
+          }),
         );
 
         return {
@@ -54,7 +54,7 @@ const getAllOrdersBySellerId = async (req, res) => {
           },
           orderItems,
         };
-      })
+      }),
     );
 
     const start = totalCount === 0 ? 0 : skip + 1;

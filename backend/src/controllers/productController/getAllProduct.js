@@ -54,34 +54,33 @@ const getAllProduct = async (req, res) => {
     if (products.length === 0)
       return res?.status(200).json({ message: "Product not found" });
 
-    const modifiedProducts = products
-      ?.map((product) => {
-        let totalStarRating = 0;
-        product?.review?.map((review) => {
-          totalStarRating += review?.rating;
-        });
-        return {
-          id: product?._id,
-          name: product?.name,
-          price: product?.price,
-          description: product?.description,
-          image: product?.image?.[0],
-          category: product?.category,
-          stock: product?.stock > 0,
-          rating: product?.review?.length
-            ? Number(totalStarRating / product?.review?.length)
-            : 0,
-          ratingNumber: product.review?.length || null,
-          mrpPrice: product?.mrpPrice,
-          sellingPrice: product?.sellingPrice,
-          isAddedToWislist: activeUserId
-            ? activeUser?.wishlist?.some(
-                (item) =>
-                  item?.productId?.toString() === product?._id?.toString()
-              )
-            : false,
-        };
+    const modifiedProducts = products?.map((product) => {
+      let totalStarRating = 0;
+      product?.review?.map((review) => {
+        totalStarRating += review?.rating;
       });
+      return {
+        id: product?._id,
+        name: product?.name,
+        price: product?.price,
+        description: product?.description,
+        image: product?.image?.[0],
+        category: product?.category,
+        stock: product?.stock > 0,
+        rating: product?.review?.length
+          ? Number(totalStarRating / product?.review?.length)
+          : 0,
+        ratingNumber: product.review?.length || null,
+        mrpPrice: product?.mrpPrice,
+        sellingPrice: product?.sellingPrice,
+        isAddedToWislist: activeUserId
+          ? activeUser?.wishlist?.some(
+              (item) =>
+                item?.productId?.toString() === product?._id?.toString(),
+            )
+          : false,
+      };
+    });
 
     const start = totalCount === 0 ? 0 : skip + 1;
     const end = Math.min(skip + modifiedProducts.length, totalCount);

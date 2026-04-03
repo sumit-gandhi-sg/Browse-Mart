@@ -19,7 +19,7 @@ const getDistinctCustomersBySellerId = async (req, res) => {
 
     const groupedCustomersPipeline = [
       { $match: { sellerId } },
-      { $sort: { createdAt: -1 } },
+      { $sort: { createdAt: -1, _id: -1 } },
       {
         $group: {
           _id: "$customerId",
@@ -28,6 +28,7 @@ const getDistinctCustomersBySellerId = async (req, res) => {
           totalOrders: { $sum: 1 },
         },
       },
+      { $sort: { lastOrderDate: -1, _id: 1 } },
     ];
 
     const countResult = await Order.aggregate([

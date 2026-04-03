@@ -26,7 +26,7 @@ const getAllOrderByUserId = async (req, res, next) => {
     const totalPages = Math.ceil(totalCount / parsedLimit);
 
     const paginatedOrders = await Order.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .skip(skip)
       .limit(parsedLimit)
       .lean();
@@ -46,9 +46,17 @@ const getAllOrderByUserId = async (req, res, next) => {
             orderItems: await Promise.all(
               filteredOrderArr?.orderItems?.map(async (item) => {
                 const productData = await Product?.findById(item?.productId);
+                const resolvedPrice = Number(
+                  item?.sellingPrice ?? item?.price ?? item?.mrpPrice ?? 0,
+                );
+                const resolvedQuantity = Number(item?.quantity ?? 0);
+
                 return {
-                  ...item?._doc,
-                  quantity: item?.quantity,
+                  ...item,
+                  quantity: resolvedQuantity,
+                  price: resolvedPrice,
+                  sellingPrice: Number(item?.sellingPrice ?? resolvedPrice),
+                  mrpPrice: Number(item?.mrpPrice ?? resolvedPrice),
                   productImage: productData?.image?.[0],
                   productDescription: productData?.description,
                 };
