@@ -109,7 +109,7 @@ export const orderStatus = [
   "shipped",
   "out for delivery",
   "delivered",
-  // "cancelled",
+  "cancelled",
 ];
 export const initialSellerDetails = {
   businessName: "",

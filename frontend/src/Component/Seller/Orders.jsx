@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
 import { Button, Loader, SectionTitle, ServerError } from "../../LIBS";
-import { formatNumber } from "../../utility/constant";
+import {
+  customToast,
+  formatNumber,
+  orderStatus,
+} from "../../utility/constant";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
@@ -16,10 +20,13 @@ const Orders = () => {
   const [orderCount, setOrderCount] = useState(0);
   const [orderRange, setOrderRange] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [updatingOrderId, setUpdatingOrderId] = useState("");
   const [error, setError] = useState(null);
   const visiblePages = Array.from({ length: totalPages }, (_, index) => index + 1)
     .filter((page) => page >= Math.max(1, currentPage - 1))
     .filter((page) => page <= Math.min(totalPages, currentPage + 1));
+  const isOrderStatusLocked = (status) =>
+    ["delivered", "cancelled"].includes(status);
 
   const getSellerOrders = async () => {
     try {
@@ -55,6 +62,45 @@ const Orders = () => {
       getSellerOrders();
     }
   }, [authToken, currentPage]);
+
+  const handleStatusChange = async (orderId, nextStatus) => {
+    try {
+      setUpdatingOrderId(orderId);
+
+      const response = await axios.patch(
+        `${SERVER_URL}/api/seller/orders/${orderId}/status`,
+        { orderStatus: nextStatus },
+        {
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      setOrders((prev) =>
+        prev.map((order) =>
+          order?._id === orderId
+            ? { ...order, orderStatus: response?.data?.order?.orderStatus }
+            : order
+        )
+      );
+
+      customToast(theme).fire({
+        icon: "success",
+        title: response?.data?.message || "Order status updated successfully",
+      });
+    } catch (updateError) {
+      customToast(theme).fire({
+        icon: "error",
+        title:
+          updateError?.response?.data?.message ||
+          "Unable to update order status",
+      });
+    } finally {
+      setUpdatingOrderId("");
+    }
+  };
 
   if (isLoading) {
     return <Loader />;
@@ -115,6 +161,46 @@ const Orders = () => {
                 </div>
 
                 <div className="text-sm small-device:text-right small-device:flex-shrink-0">
+                  <div className="mb-3 flex flex-col gap-2 small-device:items-end">
+                    <label
+                      htmlFor={`order-status-${order?._id}`}
+                      className="text-xs font-medium text-gray-500"
+                    >
+                      Update Status
+                    </label>
+                    <select
+                      id={`order-status-${order?._id}`}
+                      value={order?.orderStatus}
+                      disabled={
+                        updatingOrderId === order?._id ||
+                        isOrderStatusLocked(order?.orderStatus)
+                      }
+                      onChange={(e) =>
+                        handleStatusChange(order?._id, e?.target?.value)
+                      }
+                      className={`min-w-[180px] rounded-md border px-3 py-2 text-sm outline-none transition-all duration-300 ${
+                        theme === "dark"
+                          ? "border-gray-600 bg-gray-700 text-white"
+                          : "border-gray-300 bg-white text-gray-900"
+                      } ${
+                        updatingOrderId === order?._id ||
+                        isOrderStatusLocked(order?.orderStatus)
+                          ? "cursor-not-allowed opacity-70"
+                          : ""
+                      }`}
+                    >
+                      {orderStatus.map((status) => (
+                        <option key={status} value={status}>
+                          {status.toCapitalize()}
+                        </option>
+                      ))}
+                    </select>
+                    {isOrderStatusLocked(order?.orderStatus) && (
+                      <p className="text-xs text-gray-500">
+                        Final status cannot be changed
+                      </p>
+                    )}
+                  </div>
                   <p className="font-medium">
                     Total: {formatNumber(order?.grandTotal)}
                   </p>

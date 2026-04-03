@@ -6,6 +6,7 @@ import { FaRupeeSign } from "react-icons/fa";
 import { months } from "../../utility/constant";
 const OrderCard = ({ order }) => {
   const [isOrderItemExpanded, setIsOrderItemExpanded] = useState(false);
+  const isCancelled = order?.orderStatus === "cancelled";
   const displayItem = order?.orderItems?.slice(
     0,
     isOrderItemExpanded ? order?.orderItems?.length : 2
@@ -36,6 +37,14 @@ const OrderCard = ({ order }) => {
               {formatNumber(order?.totalAmount)}
             </span>
           </div>
+          {isCancelled && (
+            <div className="flex flex-col">
+              <span className="font-medium">Order Status</span>
+              <span className="w-max rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-600">
+                Cancelled
+              </span>
+            </div>
+          )}
         </div>
         <div className=" w-3/12 flex flex-wrap justify-center items-center tablet:flex gap-1">
           <Link
@@ -95,9 +104,15 @@ const OrderCard = ({ order }) => {
                 </div>
               </div>
               <div className="flex justify-between">
-                <p className="font-semibold text-lg p-2">
+                <p
+                  className={`font-semibold text-lg p-2 ${
+                    isCancelled ? "text-red-500" : ""
+                  }`}
+                >
                   <span>Order Status: </span>
-                  {order?.orderStatus} {order?.DeliveryDate || ""}
+                  {order?.orderStatus?.toCapitalize()}{" "}
+                  {isCancelled ? "(This order was cancelled)" : ""}
+                  {order?.DeliveryDate || ""}
                 </p>
                 {/* <p>{item?.price}</p></p> */}
                 <div className="flex mobile:grid mobile:grid-rows-3 mobile:gap-0 mobile:place-items-center tablet:flex gap-2 items-center">
