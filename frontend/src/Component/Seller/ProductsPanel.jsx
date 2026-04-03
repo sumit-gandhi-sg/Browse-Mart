@@ -3,9 +3,14 @@ import { Button, Input, SectionTitle, Select, ToggleSwitch } from "../../LIBS";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BiLoaderAlt } from "react-icons/bi";
+import { FaTrash } from "react-icons/fa";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
-import { formatNumber, productCategory } from "../../utility/constant";
+import {
+  formatNumber,
+  productCategory,
+  swalWithCustomConfiguration,
+} from "../../utility/constant";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 export const ProductsPanel = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,6 +20,7 @@ export const ProductsPanel = () => {
   const [productCount, setProductCount] = useState(null);
   const [productRange, setProductRange] = useState({});
   const [isDataFetching, setIsDataFetching] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState("");
   const [filters, setFilters] = useState({});
   const { theme } = useTheme();
   const { authToken } = useAuth();
@@ -62,6 +68,54 @@ export const ProductsPanel = () => {
   useEffect(() => {
     getAllProduct();
   }, [authToken, JSON.stringify(filters), currentPage]);
+
+  const handleDeleteProduct = async (productId) => {
+    const response = await swalWithCustomConfiguration.fire({
+      title: "Delete product?",
+      text: "This product will be removed from your seller account.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+    });
+
+    if (!response.isConfirmed) {
+      return;
+    }
+
+    try {
+      setDeletingProductId(productId);
+      const deleteResponse = await axios.delete(
+        `${SERVER_URL}/api/seller/product/${productId}`,
+        {
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      setProductArr((prev) => prev.filter((product) => product?._id !== productId));
+      setProductCount((prev) => (typeof prev === "number" ? Math.max(prev - 1, 0) : prev));
+
+      await swalWithCustomConfiguration.fire(
+        "Deleted",
+        deleteResponse?.data?.message || "Product deleted successfully",
+        "success"
+      );
+
+      await getAllProduct();
+    } catch (error) {
+      swalWithCustomConfiguration.fire(
+        "Delete failed",
+        error?.response?.data?.message || "Unable to delete product right now",
+        "error"
+      );
+    } finally {
+      setDeletingProductId("");
+    }
+  };
 
   return (
     <div
@@ -221,10 +275,26 @@ export const ProductsPanel = () => {
                         ? "Low Stock"
                         : "Out of Stock"}
                     </td>
-                    <td className="p-3 space-x-2 ">
-                      {/* <p>k</p> */}
-                      <Button className="text-blue-500" btntext="✏️" />
-                      <Button className="text-red-500" btntext="🗑️" />
+                    <td className="p-3">
+                      {/* Edit product UI is intentionally hidden until edit functionality is supported. */}
+                      {/* <Button className="text-blue-500" btntext="Edit" /> */}
+                      <Button
+                        className={`p-2 rounded-md border transition-all duration-300 disabled:opacity-50 ${
+                          theme === "dark"
+                            ? "border-red-500/40 text-red-300 hover:bg-red-500/10"
+                            : "border-red-200 text-red-600 hover:bg-red-50"
+                        }`}
+                        btntext=""
+                        icon={
+                          deletingProductId === product?._id ? (
+                            <BiLoaderAlt className="animate-spin text-base" />
+                          ) : (
+                            <FaTrash className="text-sm" />
+                          )
+                        }
+                        onClick={() => handleDeleteProduct(product?._id)}
+                        disabled={deletingProductId === product?._id}
+                      />
                     </td>
                   </tr>
                 ))}
