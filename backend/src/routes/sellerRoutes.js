@@ -10,6 +10,7 @@ import getAllProductUsingSellerId from "../controllers/sellerController/getAllPr
 import productVisibilityToggle from "../controllers/sellerController/productVisibilityToggle.js";
 import deleteProduct from "../controllers/sellerController/deleteProduct.js";
 import getAllOrdersBySellerId from "../controllers/sellerController/getAllOrdersBySellerId.js";
+import updateOrderStatus from "../controllers/sellerController/updateOrderStatus.js";
 
 router.route("/register").post(userAuthentication, sellerRegistration);
 router
@@ -21,6 +22,12 @@ router
 router
   .route("/orders")
   .get(userAuthentication, sellerAuthentication, getAllOrdersBySellerId);
+router.patch(
+  "/orders/:id/status",
+  userAuthentication,
+  sellerAuthentication,
+  updateOrderStatus
+);
 router.patch(
   "/product/visibilty-toggle/:id",
   userAuthentication,
