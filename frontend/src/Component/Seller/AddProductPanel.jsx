@@ -1,102 +1,215 @@
 import { useState } from "react";
+import axios from "axios";
+import { FiImage, FiUploadCloud } from "react-icons/fi";
+import { useDropzone } from "react-dropzone";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../Context/themeContext";
+import { useAuth } from "../../Context/authContext";
 import { Button, Input, Select, TextArea } from "../../LIBS";
+import ImagePreview from "./UploadProduct/ImagePreview";
 import {
   checkValidation,
   initialProductDetails,
   productBrands,
   productCategory,
+  swalWithCustomConfiguration,
 } from "../../utility/constant";
+
+const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 
 export const AddProductPanel = () => {
   const [productForm, setProductForm] = useState(initialProductDetails);
   const [error, setError] = useState({});
+  const [images, setImages] = useState([]);
+  const [productUploading, setProductUploading] = useState(false);
   const { theme } = useTheme();
+  const { authToken } = useAuth();
+  const navigate = useNavigate();
+
+  const onDrop = (acceptedFiles) => {
+    setImages((prev) => [...prev, ...acceptedFiles]);
+    setError((prev) => ({ ...prev, image: "" }));
+  };
+
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+    onDrop,
+    accept: { "image/*": [] },
+    multiple: true,
+    noClick: true,
+  });
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(name, value);
-    setProductForm((prev) => {
-      return {
-        ...prev,
-        [name]: value,
-      };
-    });
+    setProductForm((prev) => ({
+      ...prev,
+      ...(name === "category" ? { subCategory: "" } : {}),
+      [name]: value,
+    }));
+    setError((prev) => ({ ...prev, [name]: "" }));
   };
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(productForm);
-    const result = checkValidation(productForm);
-    console.log(result);
-    if (result) {
-      setError(result);
-    } else if (productForm?.mrpPrice < productForm?.sellingPrice) {
-      console.log("MRP Price should be greater than Selling Price");
-      setError((prev) => {
-        return {
-          ...prev,
-          mrpPrice: "MRP Price should be greater than Selling Price",
-        };
+
+  const uploadImagesToCloudinary = async () => {
+    const uploadPromises = images.map(async (file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "mycloud");
+      formData.append("cloud_name", CLOUD_NAME);
+
+      const response = await axios({
+        method: "POST",
+        url: `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        data: formData,
       });
-    } else {
+
+      return response?.data?.secure_url?.toString();
+    });
+
+    return Promise.all(uploadPromises);
+  };
+
+  const validateForm = () => {
+    const requiredFields = [
+      "name",
+      "category",
+      "description",
+      "stock",
+      "brand",
+      "mrpPrice",
+      "sellingPrice",
+    ];
+
+    const formErrors = checkValidation(productForm, requiredFields) || {};
+
+    if (!productForm?.subCategory && productForm?.category !== "others") {
+      formErrors.subCategory = "Sub Category is required!";
+    }
+
+    if (images.length < 1) {
+      formErrors.image = "Product Image is required!";
+    }
+
+    if (
+      Number(productForm?.mrpPrice) > 0 &&
+      Number(productForm?.sellingPrice) > Number(productForm?.mrpPrice)
+    ) {
+      formErrors.mrpPrice = "MRP Price should be greater than Selling Price";
+    }
+
+    return formErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    e?.preventDefault?.();
+
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      setError(formErrors);
+      return;
+    }
+
+    if (!authToken) {
+      swalWithCustomConfiguration.fire(
+        "Login required",
+        "Please login again before uploading a product.",
+        "warning"
+      );
+      return;
+    }
+
+    try {
+      setProductUploading(true);
       setError({});
-      // Submit the form data to the server or perform any other action
-      console.log("Form submitted successfully:", productForm);
+
+      const uploadedImages = await uploadImagesToCloudinary();
+      const payload = {
+        ...productForm,
+        image: uploadedImages,
+        mrpPrice: Number(productForm.mrpPrice),
+        sellingPrice: Number(productForm.sellingPrice),
+        stock: Number(productForm.stock),
+      };
+
+      const response = await axios({
+        method: "POST",
+        url: `${SERVER_URL}/api/product/add-product`,
+        data: payload,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.status === 201) {
+        await swalWithCustomConfiguration.fire(
+          "Product successfully uploaded",
+          "Your product has been added.",
+          "success"
+        );
+        setProductForm(initialProductDetails);
+        setImages([]);
+        navigate("/seller/products");
+      }
+    } catch (submitError) {
+      const status = submitError?.response?.status;
+      const message =
+        submitError?.response?.data?.message ||
+        "Error in uploading product, Please try again later.";
+
+      swalWithCustomConfiguration.fire(
+        status === 401 ? "Unauthorized" : "Error uploading!",
+        message,
+        "error"
+      );
+    } finally {
+      setProductUploading(false);
     }
   };
+
   return (
     <div
       className={`w-full rounded-lg shadow-md p-6 transition-all duration-300 ${
         theme === "dark" ? "bg-gray-800" : "bg-white"
       }`}
     >
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-4 mb-6 small-device:flex-row small-device:justify-between small-device:items-center">
         <div>
           <h1 className="text-2xl font-semibold">Add New Product</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Create and publish a new product listing
           </p>
         </div>
-        <div className="space-x-2">
-          <button
-            className={`px-4 py-2 border rounded-md ${
-              theme === "dark"
-                ? "border-gray-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
-          >
-            Save as Draft
-          </button>
+        <div className="w-full small-device:w-auto">
           <Button
-            className="px-4 py-2 bg-blue-600 text-white rounded-md"
-            btntext="Publish Product"
+            className="w-full small-device:w-auto min-w-[180px] px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:bg-purple-700 disabled:opacity-60"
+            btntext={productUploading ? "Publishing..." : "Publish Product"}
             onClick={handleSubmit}
+            loading={productUploading}
+            disabled={productUploading}
           />
         </div>
       </div>
 
-      {/* Form */}
-      <form className="space-y-6">
-        {/* Basic Info */}
+      <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 small-device:grid-cols-2 gap-4">
-          <div className=" flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <label htmlFor="name">
               Product Name <span className="required">*</span>
             </label>
             <Input
-              type={"text"}
-              id={"name"}
-              name={"name"}
+              type="text"
+              id="name"
+              name="name"
               value={productForm?.name}
               onChange={handleChange}
-              placeholder={"Product Name"}
-              className="p-2  bg-gray-100 border-2 rounded border-gray-300"
+              placeholder="Product Name"
+              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
             />
             {error.name && <p className="required-field-error">{error.name}</p>}
           </div>
 
-          <div className=" flex flex-col gap-3">
-            <label htmlFor="stock">
+          <div className="flex flex-col gap-3">
+            <label htmlFor="brand">
               Brand <span className="required">*</span>
             </label>
             <Select
@@ -112,86 +225,99 @@ export const AddProductPanel = () => {
               <p className="required-field-error">{error.brand}</p>
             )}
           </div>
-
-          {/* <div>
-            <label className="block font-medium mb-1">SKU</label>
-            <input
-              type="text"
-              placeholder="Enter SKU"
-              className="w-full border p-2 rounded-md"
-            />
-          </div> */}
         </div>
 
-        {/* Media */}
         <div>
           <label className="block font-medium mb-1">Product Media</label>
-          <div className="w-full p-6 border-2 border-dashed rounded-md flex flex-col items-center justify-center text-center text-gray-500">
-            <span className="text-3xl">📁</span>
-            <p className="my-2">Drag and drop your product images here</p>
-            <button className="text-blue-600 underline">Browse Files</button>
+          <div
+            {...getRootProps()}
+            className={`w-full p-6 border-2 border-dashed rounded-md flex flex-col items-center justify-center text-center transition-all duration-300 cursor-pointer ${
+              isDragActive
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                : theme === "dark"
+                ? "border-gray-600 text-gray-300"
+                : "border-gray-300 text-gray-500"
+            }`}
+          >
+            <input {...getInputProps()} />
+            <span className="text-3xl">
+              {images.length > 0 ? <FiImage /> : <FiUploadCloud />}
+            </span>
+            <p className="my-2">
+              {isDragActive
+                ? "Drop product images here"
+                : "Drag and drop your product images here"}
+            </p>
+            <button
+              type="button"
+              className="text-blue-600 underline cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                open();
+              }}
+            >
+              Browse Files
+            </button>
           </div>
+          {error.image && (
+            <p className="required-field-error mt-2">{error.image}</p>
+          )}
+          {images.length > 0 && (
+            <div className="mt-4">
+              <ImagePreview image={images} />
+            </div>
+          )}
         </div>
 
-        {/* Pricing & Inventory */}
         <div className="grid grid-cols-1 small-device:grid-cols-3 gap-4">
-          {/* <div>
-            <label className="block font-medium mb-1">Regular Price</label>
-            <input
-              type="number"
-              placeholder="$ 0.00"
-              className="w-full border p-2 rounded-md"
-            />
-          </div> */}
-
-          <div className=" flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <label htmlFor="mrpPrice">
               MRP Price <span className="required">*</span>
             </label>
             <Input
-              type={"number"}
-              id={"mrpPrice"}
-              name={"mrpPrice"}
+              type="number"
+              id="mrpPrice"
+              name="mrpPrice"
               value={productForm?.mrpPrice}
               onChange={handleChange}
-              placeholder={"MRP Price"}
-              className={"p-2 bg-gray-100 border-2 rounded border-gray-300"}
+              placeholder="MRP Price"
+              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
             />
             {error.mrpPrice && (
               <p className="required-field-error">{error.mrpPrice}</p>
             )}
           </div>
 
-          <div className=" flex flex-col gap-3">
-            <label htmlFor="discountedPrice">
+          <div className="flex flex-col gap-3">
+            <label htmlFor="sellingPrice">
               Selling Price <span className="required">*</span>
             </label>
             <Input
-              type={"number"}
-              id={"sellingPrice"}
-              name={"sellingPrice"}
+              type="number"
+              id="sellingPrice"
+              name="sellingPrice"
               value={productForm?.sellingPrice}
               onChange={handleChange}
-              placeholder={"Selling Price"}
-              className={"p-2 bg-gray-100 border-2 rounded border-gray-300"}
+              placeholder="Selling Price"
+              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
             />
             {error.sellingPrice && (
               <p className="required-field-error">{error.sellingPrice}</p>
             )}
           </div>
 
-          <div className=" flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <label htmlFor="stock">
               Stock Quantity <span className="required">*</span>
             </label>
             <Input
-              type={"number"}
-              id={"stock"}
-              name={"stock"}
+              type="number"
+              id="stock"
+              name="stock"
               value={productForm?.stock}
               onChange={handleChange}
-              placeholder={"Stock"}
-              className={"p-2 bg-gray-100 border-2 rounded border-gray-300"}
+              placeholder="Stock"
+              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
             />
             {error.stock && (
               <p className="required-field-error">{error.stock}</p>
@@ -199,15 +325,13 @@ export const AddProductPanel = () => {
           </div>
         </div>
 
-        {/* Description */}
-
         <div className="w-full flex flex-col gap-3">
           <label htmlFor="description">
             Description <span className="required">*</span>
           </label>
           <TextArea
             name="description"
-            id={"description"}
+            id="description"
             value={productForm?.description}
             onChange={handleChange}
             placeholder="Description"
@@ -217,16 +341,13 @@ export const AddProductPanel = () => {
                 : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
             }`}
           />
-
           {error.description && (
             <p className="required-field-error">{error.description}</p>
           )}
         </div>
 
-        {/* Categories & Tags */}
-
         <div className="grid grid-cols-1 small-device:grid-cols-2 gap-4">
-          <div className=" flex flex-col gap-3 ">
+          <div className="flex flex-col gap-3">
             <label htmlFor="category">
               Category <span className="required">*</span>
             </label>
@@ -237,26 +358,24 @@ export const AddProductPanel = () => {
               onChange={handleChange}
               value={productForm?.category}
               itemArray={productCategory}
-              displayName={"Select Category"}
+              displayName="Select Category"
             />
-
             {error.category && (
               <p className="required-field-error">{error.category}</p>
             )}
           </div>
 
-          <div className="  flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <label htmlFor="subCategory">
               Sub Category <span className="required">*</span>
             </label>
-
             <select
               name="subCategory"
               className={`p-2 bg-gray-100 border-2 rounded border-gray-300 outline-gray-400 outline-0 transition-all duration-300 ${
                 theme === "dark"
                   ? "bg-gray-700 text-white border-gray-600 focus:border-gray-300"
                   : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
-              }  `}
+              }`}
               id="subCategory"
               disabled={
                 productForm?.category === "others" || !productForm?.category
@@ -269,7 +388,7 @@ export const AddProductPanel = () => {
                 return item.value === productForm?.category
                   ? item.child?.map((subItem) => {
                       return (
-                        <option key={subItem?.id} value={subItem?.value}>
+                        <option key={subItem?.id || subItem} value={subItem}>
                           {subItem.toCapitalize()}
                         </option>
                       );
@@ -277,7 +396,6 @@ export const AddProductPanel = () => {
                   : "";
               })}
             </select>
-
             {error.subCategory && (
               <p className="required-field-error">{error.subCategory}</p>
             )}
