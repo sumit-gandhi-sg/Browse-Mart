@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { RxCross2 } from "react-icons/rx";
 import { LuLogOut } from "react-icons/lu";
-import { FaUpload } from "react-icons/fa6";
 import { FaUser, FaHeart } from "react-icons/fa";
 import { swalWithCustomConfiguration } from "../../utility/constant";
-import ProductUpload from "../Seller/UploadProduct/ProductUpload";
 import { useNavigate } from "react-router-dom";
-import { WishListContainer, BecomeASeller, Profile } from "./index";
+import { WishListContainer, Profile } from "./index";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
 const ProfileSlider = ({
@@ -24,7 +22,6 @@ const ProfileSlider = ({
     theme === "dark" ? " bg-gray-900 text-white" : "bg-white text-gray-900";
   const icons = [
     { icon: FaUser, tab: "profile" },
-    { icon: FaUpload, tab: "upload" },
     { icon: FaHeart, tab: "wishList" },
   ];
   const handleLogOut = () => {
@@ -88,14 +85,6 @@ const ProfileSlider = ({
           setUserDetail={setUserDetail}
         />
       )}
-
-      {activeTab === "upload" &&
-        (userDetail?.userType === "seller" ? (
-          <ProductUpload authToken={authToken} />
-        ) : (
-          <BecomeASeller />
-        ))}
-
       {activeTab === "wishList" && <WishListContainer authToken={authToken} />}
     </div>
   );
