@@ -662,8 +662,7 @@ export const customToast = (theme) => {
       // Style progress bar
       const progressBar = toast.querySelector(".swal2-progress-bar");
       if (progressBar) {
-        progressBar.style.backgroundColor =
-          isDark ? "#2563EB" : "#3B82F6";
+        progressBar.style.backgroundColor = isDark ? "#2563EB" : "#3B82F6";
         progressBar.style.borderRadius = "0 0 0.5rem 0.5rem";
       }
 

@@ -2,11 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaGoogle, FaFacebook, FaEyeSlash, FaEye } from "react-icons/fa";
 import { useTheme } from "../../Context/themeContext";
 import { Button, Input, OTPInput } from "../../LIBS";
-import {
-  customToast,
-  swalCustomConfiguration,
-  Toast,
-} from "../../utility/constant";
+import { customToast, swalCustomConfiguration } from "../../utility/constant";
 import axios from "axios";
 import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
 import { FaMoon, FaSun } from "react-icons/fa6";
@@ -65,7 +61,7 @@ const Login = () => {
           localStorage.setItem("AuthToken", response?.data?.AuthToken);
           setAuthToken(response?.data?.AuthToken);
           navigate(redirect ? `${redirect}` : "/");
-          Toast.fire({
+          customToast(theme).fire({
             icon: "success",
             title: "User Login Successfully !",
           });
@@ -73,7 +69,7 @@ const Login = () => {
           swalCustomConfiguration(theme)?.fire(
             "Oops!",
             "Something went wrong",
-            "error"
+            "error",
           );
         }
       })
@@ -89,7 +85,7 @@ const Login = () => {
           setMessage(message);
           setStep(2);
         } else {
-          Toast.fire({
+          customToast(theme).fire({
             icon: "error",
             title: message || "Something went wrong",
             text: errorMessage,

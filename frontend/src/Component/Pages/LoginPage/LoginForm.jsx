@@ -4,7 +4,10 @@ import { FaEyeSlash, FaEye } from "react-icons/fa";
 import Input from "../../../LIBS/Input";
 import Button from "../../../LIBS/Button";
 import { useNavigate } from "react-router-dom";
-import { Toast, swalWithCustomConfiguration } from "../../../utility/constant";
+import {
+  customToast,
+  swalWithCustomConfiguration,
+} from "../../../utility/constant";
 
 const LoginForm = ({ setIsSignUpShow, setAuthToken, redirect }) => {
   const navigate = useNavigate();
@@ -43,7 +46,7 @@ const LoginForm = ({ setIsSignUpShow, setAuthToken, redirect }) => {
       swalWithCustomConfiguration?.fire(
         "Oops!",
         "All field are required",
-        "warning"
+        "warning",
       );
     } else {
       handleLogin();
@@ -63,7 +66,7 @@ const LoginForm = ({ setIsSignUpShow, setAuthToken, redirect }) => {
           localStorage.setItem("AuthToken", response?.data?.AuthToken);
           setAuthToken(response?.data?.AuthToken);
           navigate(redirect ? `${redirect}` : "/");
-          Toast?.fire({
+          customToast()?.fire({
             icon: "success",
             title: "User Login Successfully !",
           });
@@ -71,7 +74,7 @@ const LoginForm = ({ setIsSignUpShow, setAuthToken, redirect }) => {
           swalWithCustomConfiguration?.fire(
             "Oops!",
             "Something went wrong",
-            "error"
+            "error",
           );
         }
       })
@@ -88,7 +91,7 @@ const LoginForm = ({ setIsSignUpShow, setAuthToken, redirect }) => {
           swalWithCustomConfiguration?.fire(
             "Oops!",
             "Something went wrong",
-            "error"
+            "error",
           );
         }
       });

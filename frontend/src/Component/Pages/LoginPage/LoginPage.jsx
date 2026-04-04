@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../../../LIBS/Button";
 import axios from "axios";
 import { swalWithCustomConfiguration } from "../../../utility/constant";
-import { Toast } from "../../../utility/constant";
+import { customToast } from "../../../utility/constant";
 import Swal from "sweetalert2";
 import { useAuth } from "../../../Context/authContext";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
@@ -40,7 +40,7 @@ const LoginPage = () => {
           setAuthToken(response?.data?.AuthToken);
           setIslogining((prev) => !prev);
           navigate(redirect ? `${redirect}` : "/");
-          Toast?.fire({
+          customToast()?.fire({
             icon: "success",
             title: "User Login Successfully!",
           });
@@ -48,7 +48,7 @@ const LoginPage = () => {
           swalWithCustomConfiguration?.fire(
             "Oops!",
             "Something went wrong",
-            "error"
+            "error",
           );
         }
       })
@@ -66,7 +66,7 @@ const LoginPage = () => {
           swalWithCustomConfiguration?.fire(
             "Oops!",
             "Something went wrong",
-            "error"
+            "error",
           );
         }
       });
