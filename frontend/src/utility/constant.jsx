@@ -547,13 +547,52 @@ export const getAllCountry = async () => {
   }
 };
 
-export const swalWithCustomConfiguration = Swal.mixin({
-  customClass: {
-    //   cancelButton: "",
-    denyButton: "bg-gray-300 text-white",
-    confirmButton: "confirm-btn",
+export const swalWithCustomConfiguration = {
+  fire: (...args) => {
+    const resolvedTheme =
+      typeof window !== "undefined"
+        ? localStorage.getItem("theme") || "light"
+        : "light";
+    const isDark = resolvedTheme === "dark";
+
+    const incomingOptions =
+      typeof args?.[0] === "object" && args?.[0] !== null
+        ? args?.[0]
+        : {
+            title: args?.[0],
+            text: args?.[1],
+            icon: args?.[2],
+          };
+
+    const incomingDidOpen = incomingOptions?.didOpen;
+
+    return Swal.fire({
+      ...incomingOptions,
+      background: isDark ? "#1f2937" : "#ffffff",
+      color: isDark ? "#f9fafb" : "#111827",
+      customClass: {
+        popup: isDark
+          ? "bg-gray-800 text-white border border-gray-700 rounded-xl"
+          : "bg-white text-gray-900 border border-gray-200 rounded-xl",
+        title: isDark ? "text-white" : "text-gray-900",
+        htmlContainer: isDark ? "text-gray-300" : "text-gray-700",
+        denyButton: "bg-gray-300 text-white",
+        confirmButton: "confirm-btn",
+        ...(incomingOptions?.customClass || {}),
+      },
+      didOpen: (popup) => {
+        const closeEl = popup.querySelector(".swal2-close");
+        if (closeEl) {
+          closeEl.style.color = isDark ? "#d1d5db" : "#374151";
+        }
+
+        if (typeof incomingDidOpen === "function") {
+          incomingDidOpen(popup);
+        }
+      },
+    });
   },
-});
+};
 
 export const Toast = Swal.mixin({
   toast: true,
@@ -567,15 +606,23 @@ export const Toast = Swal.mixin({
   },
 });
 
-export const customToast = (theme = "light") => {
+export const customToast = (theme) => {
+  const resolvedTheme =
+    theme ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem("theme") || "light"
+      : "light");
+  const isDark = resolvedTheme === "dark";
+
   return Swal.mixin({
     toast: true,
     position: "top-end",
     showConfirmButton: false,
     timer: 2000,
     timerProgressBar: true,
+    background: isDark ? "#1f2937" : "#ffffff",
+    color: isDark ? "#f9fafb" : "#111827",
     didOpen: (toast) => {
-      // Base Tailwind classes
       const baseClasses = [
         "rounded-lg",
         "shadow-lg",
@@ -587,21 +634,36 @@ export const customToast = (theme = "light") => {
         "border",
       ];
 
-      // Theme specific classes
       const darkClasses = ["bg-gray-800", "text-white", "border-gray-700"];
       const lightClasses = ["bg-white", "text-gray-900", "border-gray-200"];
 
-      // Add classes based on your custom theme variable
       toast.classList.add(
         ...baseClasses,
-        ...(theme === "dark" ? darkClasses : lightClasses)
+        ...(isDark ? darkClasses : lightClasses),
       );
+
+      // SweetAlert sets internal title/content colors; force theme-aligned text colors.
+      const titleEl = toast.querySelector(".swal2-title");
+      const contentEl = toast.querySelector(".swal2-html-container");
+      const closeEl = toast.querySelector(".swal2-close");
+
+      if (titleEl) {
+        titleEl.style.color = isDark ? "#f9fafb" : "#111827";
+      }
+
+      if (contentEl) {
+        contentEl.style.color = isDark ? "#e5e7eb" : "#1f2937";
+      }
+
+      if (closeEl) {
+        closeEl.style.color = isDark ? "#d1d5db" : "#374151";
+      }
 
       // Style progress bar
       const progressBar = toast.querySelector(".swal2-progress-bar");
       if (progressBar) {
         progressBar.style.backgroundColor =
-          theme === "dark" ? "#2563EB" : "#3B82F6";
+          isDark ? "#2563EB" : "#3B82F6";
         progressBar.style.borderRadius = "0 0 0.5rem 0.5rem";
       }
 
