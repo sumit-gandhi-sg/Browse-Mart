@@ -2,59 +2,110 @@ import React, { useState } from "react";
 import { useTheme } from "../Context/themeContext";
 import { MdClose } from "react-icons/md";
 import { RxHamburgerMenu } from "react-icons/rx";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
-const SideBar = ({ tabs, activeTab, setActiveTab }) => {
+const SideBar = ({ tabs = [], activeTab, setActiveTab, classNames = {} }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme } = useTheme();
+
+  const defaults = {
+    wrapper: "relative z-20",
+    overlay:
+      "fixed inset-x-0 bottom-0 top-16 z-30 bg-black/40 backdrop-blur-[1px] tablet:hidden",
+    aside: `${
+      theme === "dark"
+        ? "border-gray-700 bg-gray-900 text-white"
+        : "border-gray-200 bg-white text-gray-900"
+    } fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-72 border-r px-4 py-4 shadow-2xl transition-transform duration-300 tablet:relative tablet:top-0 tablet:z-0 tablet:h-full tablet:translate-x-0`,
+    header: "mb-4 flex items-center justify-between",
+    title: "text-lg font-semibold tracking-wide",
+    list: "space-y-1",
+    item: "",
+    link: `${
+      theme === "dark"
+        ? "text-gray-300 hover:bg-gray-800 hover:text-white"
+        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+    } group flex items-center justify-start gap-3 rounded-xl px-3 py-2.5 font-medium transition-all duration-200`,
+    activeLink:
+      "bg-blue-600 text-white shadow-sm hover:bg-blue-600 hover:text-white",
+    icon: "text-lg",
+    mobileToggle: `${
+      theme === "dark"
+        ? "bg-gray-800 text-white border-gray-700"
+        : "bg-white text-gray-900 border-gray-200"
+    } fixed right-3 top-[4.5rem] z-40 rounded-lg border p-2 shadow-md tablet:hidden`,
+    closeButton: `${
+      theme === "dark"
+        ? "text-gray-300 hover:bg-gray-800"
+        : "text-gray-700 hover:bg-gray-100"
+    } rounded-md p-1 transition-all duration-200 tablet:hidden`,
+  };
+
+  const mergedClassNames = {
+    ...defaults,
+    ...classNames,
+  };
+
   return (
-    <div className=" relative z-50 ">
-      <aside
-        className={`${
-          theme === "dark" ? "bg-gray-800" : "bg-white"
-        } transform ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }  w-64 z-10  p-4 text-base shadow-lg transition-all duration-300 fixed h-full  tablet:relative tablet:transform-none`}
-      >
-        <MdClose
-          className="w-7 h-7 tablet:hidden  font-bold text-2xl ml-auto"
+    <div className={mergedClassNames.wrapper}>
+      {sidebarOpen && (
+        <button
+          className={mergedClassNames.overlay}
+          aria-label="Close sidebar overlay"
           onClick={() => setSidebarOpen(false)}
         />
+      )}
 
-        <ul className="mt-4 space-y-2">
+      <aside
+        className={`${mergedClassNames.aside} ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className={mergedClassNames.header}>
+          <h2 className={mergedClassNames.title}>Seller Panel</h2>
+          <button
+            className={mergedClassNames.closeButton}
+            aria-label="Close sidebar"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <MdClose className="h-6 w-6" />
+          </button>
+        </div>
+
+        <ul className={mergedClassNames.list}>
           {tabs?.map((item, index) => {
             const Icon = item.icon;
             return (
-              <li
-                key={index}
-                className={` `}
-                // onClick={() => {
-                //   setActiveTab(index);
-                //   setSidebarOpen(false);
-                // }}
-              >
+              <li key={index} className={mergedClassNames.item}>
                 <NavLink
                   to={item?.navigate}
+                  onClick={() => {
+                    setActiveTab && setActiveTab(index);
+                    setSidebarOpen(false);
+                  }}
                   className={({ isActive }) =>
-                    ` p-2  flex items-center flex-row-reverse justify-end gap-4 text-blue-600 rounded-md  cursor-pointer ${
-                      isActive ? "bg-blue-100" : "hover:bg-gray-200"
-                    } `
+                    `${mergedClassNames.link} ${
+                      isActive ? mergedClassNames.activeLink : ""
+                    }`
                   }
                 >
-                  {Icon && <span>{<Icon />}</span>}
-
-                  {item?.name}
+                  {Icon ? <Icon className={mergedClassNames.icon} /> : null}
+                  <span>{item?.name}</span>
                 </NavLink>
               </li>
             );
           })}
         </ul>
       </aside>
+
       {!sidebarOpen && (
-        <RxHamburgerMenu
-          className="w-5 h-5 m-4 z-0 absolute top-0 tablet:hidden"
+        <button
+          className={mergedClassNames.mobileToggle}
+          aria-label="Open sidebar"
           onClick={() => setSidebarOpen((prev) => !prev)}
-        />
+        >
+          <RxHamburgerMenu className="h-5 w-5" />
+        </button>
       )}
     </div>
   );
