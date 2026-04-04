@@ -24,7 +24,7 @@ const DashBoard = () => {
             "Content-Type": "application/json; charset=UTF-8",
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
       setDashBoardDetail(response?.data);
@@ -98,9 +98,9 @@ const DashBoard = () => {
               <p className="text-2xl font-bold">
                 {formatNumber(stat.value, stat?.symbol ? stat?.symbol : "")}
               </p>
-              <p className="text-sm text-green-500">
+              {/* <p className="text-sm text-green-500">
                 {stat.change} from last month
-              </p>
+              </p> */}
             </div>
           ))}
         </div>

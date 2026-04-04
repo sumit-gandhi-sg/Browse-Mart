@@ -8,7 +8,7 @@ const SideBar = ({ tabs, activeTab, setActiveTab }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme } = useTheme();
   return (
-    <div className=" relative ">
+    <div className=" relative z-50 ">
       <aside
         className={`${
           theme === "dark" ? "bg-gray-800" : "bg-white"
