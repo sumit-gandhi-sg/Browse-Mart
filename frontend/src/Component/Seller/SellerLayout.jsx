@@ -64,12 +64,12 @@ const SellerLayout = () => {
       // redirect: "/",
       navigate: "customers",
     },
-    {
-      id: 5,
-      name: "Setting",
-      icon: Settings,
-      navigate: "setting",
-    },
+    // {
+    //   id: 5,
+    //   name: "Setting",
+    //   icon: Settings,
+    //   navigate: "setting",
+    // },
   ];
   // const ActiveTabComponent = tabs[activeTab]?.component;
   useEffect(() => {
