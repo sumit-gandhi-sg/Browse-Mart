@@ -197,7 +197,7 @@ const Login = () => {
     setIsPasswordShow((prev) => !prev);
   };
   useEffect(() => {
-    if (authToken) navigate("/");
+    if (authToken) navigate(redirect ? `${redirect}` : "/");
   }, [authToken]);
   return (
     !authToken && (

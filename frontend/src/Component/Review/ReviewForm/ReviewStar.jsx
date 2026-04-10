@@ -7,28 +7,29 @@ const ReviewStar = ({ setStarRating, rating }) => {
     setHoveredRating(rating);
   };
   const handleClick = (index) => {
-    // Call your function to handle the star rating click here
-    setStarRating((prev) => {
-      return {
-        ...prev,
-        rating: index,
-      };
-    });
+    setStarRating((prev) => ({
+      ...prev,
+      rating: index,
+    }));
   };
   const handleMouseLeave = () => {
     setHoveredRating(0);
   };
+
+  const ratingLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+  const activeRating = hoveredRating || rating;
+
   return (
-    <div className=" w-full flex gap-2">
-      {[1, 2, 3, 4, 5].map((index) => {
-        return (
+    <div className="flex flex-col items-center gap-2 w-full">
+      <div className="flex gap-2">
+        {[1, 2, 3, 4, 5].map((index) => (
           <svg
             key={index}
-            className={`w-10 h-10 cursor-pointer ${
-              index <= (hoveredRating || rating)
-                ? "text-yellow-500"
-                : "text-gray-300"
-            }`}
+            className={`w-10 h-10 cursor-pointer transition-all duration-150 drop-shadow-sm
+              ${index <= activeRating
+                ? "text-yellow-400 scale-110"
+                : "text-gray-300 hover:text-yellow-300 hover:scale-110"
+              }`}
             onMouseEnter={() => handleMouseOver(index)}
             onMouseLeave={handleMouseLeave}
             onClick={() => handleClick(index)}
@@ -37,9 +38,14 @@ const ReviewStar = ({ setStarRating, rating }) => {
           >
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.77 5.82 22 7 14.14l-5-4.87 6.91-1.01z" />
           </svg>
-        );
-      })}
-      {/* <span> ({starRating})</span> */}
+        ))}
+      </div>
+      {/* Rating label */}
+      <p className={`text-sm font-semibold font-roboto transition-all duration-150 h-5
+        ${activeRating >= 4 ? "text-green-500" : activeRating >= 3 ? "text-yellow-500" : activeRating >= 1 ? "text-red-400" : "text-gray-400"}
+      `}>
+        {ratingLabels[activeRating] || "Tap a star to rate"}
+      </p>
     </div>
   );
 };

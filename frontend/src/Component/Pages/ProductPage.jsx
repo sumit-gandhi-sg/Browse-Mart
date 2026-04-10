@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaShare } from "react-icons/fa";
+import { FaShare, FaShieldAlt, FaTruck, FaUndo } from "react-icons/fa";
+import { MdVerified } from "react-icons/md";
+import { BsBoxSeam, BsLightningChargeFill } from "react-icons/bs";
+import { FiShoppingCart } from "react-icons/fi";
 import ProductCard from "../Product/ProductCard";
 import { Button, Loader, ServerError } from "../../LIBS";
 import { ReviewForm, ReviewCard } from "../Review";
@@ -10,11 +13,48 @@ import { formatNumber, socialMedia } from "../../utility/constant";
 import AddToCartButton from "../../utility/AddToCartButton";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
-// import { SERVER_URL } from "../../config";
 import pageNotFind from "../../assets/images/pageNotFind.jpg";
 import { useUser } from "../../Context/userContext";
+
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
+// ── Trust Badge Component ──────────────────────────────────────────────────────
+const TrustBadge = ({ icon, label, sub, isDark }) => (
+  <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border flex-1 min-w-[120px]
+    ${isDark ? "border-gray-700 bg-gray-800/60" : "border-gray-200 bg-gray-50"}`}
+  >
+    <span className="text-indigo-500 text-xl flex-shrink-0">{icon}</span>
+    <div>
+      <p className={`text-xs font-semibold font-roboto ${isDark ? "text-white" : "text-gray-800"}`}>{label}</p>
+      <p className={`text-[10px] font-roboto ${isDark ? "text-gray-400" : "text-gray-500"}`}>{sub}</p>
+    </div>
+  </div>
+);
+
+// ── Star Rating Row ────────────────────────────────────────────────────────────
+const StarRow = ({ rating, count, isDark }) => (
+  <div className="flex items-center gap-2">
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg
+          key={i}
+          className={`w-4 h-4 ${i <= Math.round(rating) ? "text-yellow-400" : isDark ? "text-gray-600" : "text-gray-300"}`}
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.77 5.82 22 7 14.14l-5-4.87 6.91-1.01z" />
+        </svg>
+      ))}
+    </div>
+    {count > 0 && (
+      <span className={`text-sm font-roboto font-semibold ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>
+        {rating?.toFixed(1)} <span className={`font-normal ${isDark ? "text-gray-400" : "text-gray-500"}`}>({count} reviews)</span>
+      </span>
+    )}
+  </div>
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
 const ProductPage = () => {
   const currentURL = window.location.href;
   const { productId } = useParams();
@@ -26,31 +66,29 @@ const ProductPage = () => {
   const [isShareShow, setIsShareShow] = useState(false);
   const [isError, setIsError] = useState({});
   const [isExpened, setIsExpened] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(false);
   const location = useLocation();
-  const message = `🚀 Exciting News! 🌟\n\nI just discovered the **${productData?.name}** and I can't stop raving about it! 🎉\n\n✨ **Why You’ll Love It**:\n- Top-notch quality that speaks for itself!\n- Perfect for tech enthusiasts.\n- Limited-time offer: Don't miss out! 🕒\n\n👉 Check it out here: ${currentURL}\n\n💬 Let me know what you think, and tag your friends who need this in their lives!`;
+  const message = `🚀 Exciting News! 🌟\n\nI just discovered the **${productData?.name}** and I can't stop raving about it! 🎉\n\n✨ **Why You'll Love It**:\n- Top-notch quality that speaks for itself!\n- Perfect for tech enthusiasts.\n- Limited-time offer: Don't miss out! 🕒\n\n👉 Check it out here: ${currentURL}\n\n💬 Let me know what you think, and tag your friends who need this in their lives!`;
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { authToken } = useAuth();
   const { userDetail } = useUser();
+  const isDark = theme === "dark";
+
   const handleClick = () => {
     setIsReviewClicked((isReview) => !isReview);
   };
+
   const getProductDataById = () => {
     setIsDataFetch(false);
     axios({
       method: "get",
       url: `${SERVER_URL}/api/product/${productId}`,
-      // data: {
-      //   productId: productId,
-      //   quantity: 1,
-      // },
     })
       .then((response) => {
         const { data, status } = response;
         if (status === 200) {
           setProductData(data?.product);
-        } else {
-          // Handle error
         }
         setIsDataFetch(true);
       })
@@ -66,6 +104,7 @@ const ProductPage = () => {
         }
       });
   };
+
   const addToRecentlyViewed = (product) => {
     let totalStarRating = 0;
     product?.review?.map((review) => (totalStarRating += review?.rating));
@@ -89,13 +128,10 @@ const ProductPage = () => {
     recentlyViewed = recentlyViewed.filter(
       (p) => (p.id || p._id) !== modifiedProduct.id
     );
-
     recentlyViewed.unshift(modifiedProduct);
-
     if (recentlyViewed.length > 5) {
       recentlyViewed.pop();
     }
-
     localStorage.setItem("recentlyViewed", JSON.stringify(recentlyViewed));
   };
 
@@ -133,20 +169,36 @@ const ProductPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  if (!isDataFetch && !isReviewClicked) return <Loader />; // Loading state while data is fetched.  Replace with your own loading component.  e.g., <Loading /> or <CircularProgress /> from material-ui.  Also, add error handling here.  e.g., axios.get().catch(error => console.error(error))
+  // Sticky Add-to-Cart bar scroll listener
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowStickyBar(window.scrollY > 320);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // ── Computed values ──────────────────────────────────────────────────────────
+  const reviews = productData?.review || [];
+  const avgRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + (r?.rating || 0), 0) / reviews.length
+      : 0;
+  const mrp = productData?.mrpPrice;
+  const selling = productData?.sellingPrice || productData?.price;
+  const discountPct =
+    mrp && selling && mrp > selling
+      ? Math.round(((mrp - selling) / mrp) * 100)
+      : null;
+  const isLowStock = productData?.stock > 0 && productData?.stock < 10;
+
+  // ── Error / Loading states ───────────────────────────────────────────────────
+  if (!isDataFetch && !isReviewClicked) return <Loader />;
   if (isError?.status === 404) {
     return (
-      <div
-        className={`w-full h-screen flex justify-center items-center  ${
-          theme === "dark" ? "bg-gray-900 text-white" : "bg-gray-100"
-        }`}
-      >
+      <div className={`w-full h-screen flex justify-center items-center ${isDark ? "bg-gray-900 text-white" : "bg-gray-100"}`}>
         <div className="flex flex-col gap-4 items-center">
-          <img
-            src={pageNotFind}
-            className="h-[400px] rounded-3xl"
-            alt="Page Not Found"
-          />
+          <img src={pageNotFind} className="h-[400px] rounded-3xl" alt="Page Not Found" />
           <div className="font-roboto text-ellipsis text-lg">
             <p>Ohh....</p>
             <p className="">{isError?.message}!</p>
@@ -156,194 +208,329 @@ const ProductPage = () => {
     );
   }
   if (isError?.status === 500) return <ServerError />;
+
+  // ── Main Render ──────────────────────────────────────────────────────────────
   return (
-    productData &&
-    relatedProduct && (
-      // productData && (
-      <div
-        className={`product-page-section py-5 transition-all duration-300 ${
-          theme === "dark"
-            ? " bg-gray-900 text-white"
-            : "bg-white text-gray-900"
-        }`}
-      >
-        {/* product detail section */}
+    productData && relatedProduct && (
+      <div className={`product-page-section transition-all duration-300 ${isDark ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
 
-        <div className="flex p-3 gap-3 mobile:flex-col tablet:flex-row">
-          {/* product image section */}
-          <ProductImage productData={productData} />
-
-          {/* product description section */}
-
-          <div className="product-description w-1/2 mobile:w-full tablet:w-1/2 flex flex-col gap-3 ">
-            <h1 className="product-name font-roboto font-bold text-2xl text-left">
+        {/* ── Sticky Add-to-Cart Bar ─────────────────────────────────────────── */}
+        <div className={`
+          fixed top-0 left-0 right-0 z-50
+          transition-all duration-300 ease-in-out shadow-lg
+          ${showStickyBar ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}
+          ${isDark ? "bg-gray-900/95 border-b border-gray-700" : "bg-white/95 border-b border-gray-200"}
+          backdrop-blur-md
+        `}>
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <p className={`font-roboto font-semibold text-sm truncate flex-1 ${isDark ? "text-white" : "text-gray-900"}`}>
               {productData?.name}
-            </h1>
-            <p className="product-description font-roboto">
-              {isExpened
-                ? productData?.description
-                : productData?.description?.toString()?.substring(0, 250)}
-              {productData?.description?.length > 250 && (
-                <span
-                  className=" text-blue-500 underline text-sm font-semibold cursor-pointer"
-                  onClick={() => setIsExpened(!isExpened)}
-                >
-                  {isExpened ? " Read Less" : " Read More"}
-                </span>
-              )}
             </p>
-            <p className="product-price text-left">
-              {formatNumber(productData?.price || productData?.sellingPrice)}
-            </p>
-
-            <div className="buy-buttons  flex gap-3 w-full   ">
-              {userDetail && authToken ? (
-                productData?.stock ? (
-                  <div className="w-full flex gap-4">
-                    {/* <Button
-                      btntext={"Add to Cart"}
-                      className={
-                        "bg-blue-200 rounded w-1/2 font-roboto text-white p-2"
-                      }
-                      onClick={() =>
-                        handleAddToCart(
-                          userDetail,
-                          productId,
-                          authToken,
-                          setProductAdding,
-                          navigate,
-                          setCartCount
-                        )
-                      }
-                      loading={productAdding}
-                    /> */}
+            <div className="flex items-center gap-3">
+              <span className={`font-bold text-lg font-roboto ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>
+                {formatNumber(selling)}
+              </span>
+              {productData?.stock ? (
+                userDetail && authToken ? (
+                  <div className="flex gap-2">
                     <AddToCartButton
                       authToken={authToken}
                       userDetail={userDetail}
                       productId={productId}
-                      className={
-                        "bg-blue-200 rounded w-1/2 font-roboto text-white p-2"
-                      }
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-roboto px-4 py-2 rounded-lg transition-all duration-200"
                     />
-                    <Link to={"/product/buy/" + productId} className="w-1/2">
-                      <Button
-                        btntext={"Buy Now"}
-                        className={
-                          "bg-blue-500 rounded w-full text-white p-2 shadow-md hover:scale-105 transition-all active:bg-blue-100"
-                        }
-                      />
+                    <Link to={"/product/buy/" + productId}>
+                      <button className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-roboto px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-1">
+                        <BsLightningChargeFill className="text-xs" />
+                        Buy Now
+                      </button>
                     </Link>
                   </div>
                 ) : (
-                  <p className="text-center text-red-500">Out of Stock</p>
+                  <Link to={`/login?redirect=${encodeURIComponent(location?.pathname)}`}>
+                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-roboto px-4 py-2 rounded-lg transition-all duration-200">
+                      Login to Buy
+                    </button>
+                  </Link>
                 )
               ) : (
-                <Link
-                  to={`/login?redirect=${encodeURIComponent(
-                    location?.pathname
-                  )}`}
-                  className="w-full"
-                >
-                  <Button
-                    btntext={"Login to Buy"}
-                    className={
-                      "bg-blue-500 rounded w-full text-white p-2 shadow-md hover:scale-105 transition-all active:bg-blue-100"
-                    }
-                  />
+                <span className="text-red-500 text-sm font-semibold font-roboto">Out of Stock</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Hero Section: Image + Info ─────────────────────────────────────── */}
+        <div className="flex p-3 gap-3 mobile:flex-col tablet:flex-row max-w-7xl mx-auto">
+
+          {/* Product Image Gallery */}
+          <ProductImage productData={productData} />
+
+          {/* Product Info Panel */}
+          <div className="product-description w-1/2 mobile:w-full tablet:w-1/2 flex flex-col gap-4 py-4 pr-2">
+
+            {/* Category Badge */}
+            {productData?.category && (
+              <span className={`
+                inline-flex w-max items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full font-roboto
+                ${isDark ? "bg-indigo-900/50 text-indigo-300 border border-indigo-700" : "bg-indigo-50 text-indigo-600 border border-indigo-200"}
+              `}>
+                <BsBoxSeam className="text-xs" />
+                {productData?.category?.toUpperCase()}
+              </span>
+            )}
+
+            {/* Product Title */}
+            <h1 className={`product-name font-roboto font-bold text-2xl tablet:text-3xl text-left leading-snug ${isDark ? "text-white" : "text-gray-900"}`}>
+              {productData?.name}
+            </h1>
+
+            {/* Ratings Row */}
+            {reviews.length > 0 && (
+              <StarRow rating={avgRating} count={reviews.length} isDark={isDark} />
+            )}
+
+            {/* Divider */}
+            <div className={`border-t ${isDark ? "border-gray-700" : "border-gray-200"}`} />
+
+            {/* Pricing Block */}
+            <div className="flex flex-col gap-1">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className={`text-3xl font-bold font-roboto ${isDark ? "text-white" : "text-gray-900"}`}>
+                  {formatNumber(selling)}
+                </span>
+                {mrp && mrp > selling && (
+                  <span className={`text-lg line-through font-roboto ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                    {formatNumber(mrp)}
+                  </span>
+                )}
+                {discountPct && (
+                  <span className="text-sm font-bold px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-roboto">
+                    {discountPct}% OFF
+                  </span>
+                )}
+              </div>
+              <p className={`text-xs font-roboto ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                Inclusive of all taxes
+              </p>
+            </div>
+
+            {/* Low Stock Urgency */}
+            {isLowStock && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl">
+                <span className="text-red-500 text-sm">⚠️</span>
+                <p className="text-red-600 font-semibold text-sm font-roboto">
+                  Only {productData?.stock} left in stock — order soon!
+                </p>
+              </div>
+            )}
+
+            {/* Out of Stock */}
+            {!productData?.stock && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl">
+                <span className="text-red-500">❌</span>
+                <p className="text-red-600 font-semibold text-sm font-roboto">Currently Out of Stock</p>
+              </div>
+            )}
+
+            {/* Trust Badges */}
+            <div className="flex flex-wrap gap-2">
+              <TrustBadge icon={<FaTruck />} label="Free Delivery" sub="On orders above ₹499" isDark={isDark} />
+              <TrustBadge icon={<FaUndo />} label="Easy Returns" sub="7-day return policy" isDark={isDark} />
+              <TrustBadge icon={<FaShieldAlt />} label="Secure Payment" sub="100% safe checkout" isDark={isDark} />
+            </div>
+
+            {/* Divider */}
+            <div className={`border-t ${isDark ? "border-gray-700" : "border-gray-200"}`} />
+
+            {/* CTA Buttons */}
+            <div className="buy-buttons flex gap-3 w-full">
+              {userDetail && authToken ? (
+                productData?.stock ? (
+                  <div className="w-full flex gap-3">
+                    <AddToCartButton
+                      authToken={authToken}
+                      userDetail={userDetail}
+                      productId={productId}
+                      className={`
+                        flex-1 flex items-center justify-center gap-2
+                        py-3 rounded-xl font-roboto font-semibold text-base
+                        border-2 border-indigo-500 text-indigo-600
+                        hover:bg-indigo-50 active:bg-indigo-100
+                        transition-all duration-200
+                        ${isDark ? "text-indigo-400 hover:bg-indigo-900/30 border-indigo-500" : ""}
+                      `}
+                    />
+                    <Link to={"/product/buy/" + productId} className="flex-1">
+                      <button className="
+                        w-full py-3 rounded-xl font-roboto font-semibold text-base
+                        bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
+                        text-white flex items-center justify-center gap-2
+                        shadow-md hover:shadow-indigo-200 transition-all duration-200
+                        hover:scale-[1.02] active:scale-100
+                      ">
+                        <BsLightningChargeFill />
+                        Buy Now
+                      </button>
+                    </Link>
+                  </div>
+                ) : null
+              ) : (
+                <Link to={`/login?redirect=${encodeURIComponent(location?.pathname)}`} className="w-full">
+                  <button className="
+                    w-full py-3 rounded-xl font-roboto font-semibold text-base
+                    bg-indigo-600 hover:bg-indigo-700 text-white
+                    flex items-center justify-center gap-2
+                    shadow-md transition-all duration-200 hover:scale-[1.02]
+                  ">
+                    <FiShoppingCart />
+                    Login to Buy
+                  </button>
                 </Link>
               )}
             </div>
 
+            {/* Delivery Estimate */}
+            <div className={`flex items-center gap-2 text-sm font-roboto ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+              <FaTruck className="text-indigo-500" />
+              <span>Estimated delivery: <strong className={isDark ? "text-white" : "text-gray-900"}>3–5 business days</strong></span>
+            </div>
+
             {/* Share Button */}
-            <div className="flex flex-col mobile:flex-row tablet:flex-col gap-2 ">
-              <span onClick={() => setIsShareShow((prev) => !prev)}>
-                <FaShare className="text-3xl cursor-pointer p-1 text-blue-400 rounded-full hover:bg-blue-400 hover:text-white" />
+            <div className={`border-t pt-3 ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className={`text-sm font-roboto font-semibold ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  Share:
+                </span>
+                <span
+                  onClick={() => setIsShareShow((prev) => !prev)}
+                  className={`cursor-pointer p-2 rounded-full transition-all duration-200
+                    ${isDark ? "hover:bg-gray-700 text-indigo-400" : "hover:bg-gray-100 text-indigo-500"}
+                  `}
+                >
+                  <FaShare className="text-lg" />
+                </span>
+                {isShareShow && (
+                  <div className="flex gap-2">
+                    {socialMedia.map((media, index) => (
+                      <div className="group relative" key={index}>
+                        <span className={`
+                          absolute -top-8 left-1/2 -translate-x-1/2
+                          text-white text-xs px-2 py-1 rounded whitespace-nowrap
+                          bg-gray-700 hidden group-hover:block z-10
+                        `}>
+                          {media.name}
+                        </span>
+                        <a
+                          href={media.link + encodeURIComponent(message)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="social-media-icon"
+                        >
+                          {media.icon}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ── Product Description ────────────────────────────────────────────── */}
+        <div className={`mx-auto max-w-7xl px-5 py-6 rounded-2xl mx-3 my-4
+          ${isDark ? "bg-gray-800/40 border border-gray-700" : "bg-gray-50 border border-gray-200"}`}
+        >
+          <h2 className={`text-xl font-bold font-roboto mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
+            Product Description
+          </h2>
+          <p className={`font-roboto text-sm leading-relaxed ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+            {isExpened
+              ? productData?.description
+              : productData?.description?.toString()?.substring(0, 300)}
+            {productData?.description?.length > 300 && (
+              <span
+                className="text-indigo-500 font-semibold cursor-pointer ml-1 hover:text-indigo-400 transition-colors"
+                onClick={() => setIsExpened(!isExpened)}
+              >
+                {isExpened ? " Read Less" : " Read More"}
               </span>
-              {isShareShow && (
-                <div className="flex flex-col mobile:flex-row tablet:flex-col gap-2 w-min  h-min">
-                  {socialMedia.map((media, index) => (
-                    <div className="group relative">
-                      <span
-                        className={`bg-blue-400 absolute bottom-0 left-10 mobile:-left-3 mobile:-bottom-8  tablet:left-10 tablet:bottom-0 text-white text-xs hidden p-1 rounded group-hover:block`}
-                      >
-                        {media.name}
-                      </span>
-                      <a
-                        href={media.link + encodeURIComponent(message)}
-                        key={index}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="social-media-icon "
-                      >
-                        {media.icon}
-                      </a>
-                    </div>
-                  ))}
-                </div>
+            )}
+          </p>
+        </div>
+
+        {/* ── Reviews Section ────────────────────────────────────────────────── */}
+        <div className="review-section px-4 py-6 max-w-7xl mx-auto">
+          <div className="flex gap-3 justify-between mb-5 items-center">
+            <div>
+              <h2 className={`text-2xl font-bold font-roboto ${isDark ? "text-white" : "text-gray-900"}`}>
+                Customer Reviews
+              </h2>
+              {reviews.length > 0 && (
+                <p className={`text-sm font-roboto mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  {reviews.length} review{reviews.length !== 1 ? "s" : ""} · {avgRating.toFixed(1)} avg rating
+                </p>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* related product section */}
-
-        <div className="related-product-section p-4 mt-4">
-          {relatedProduct.length > 0 && (
-            <h2 className=" font-bold my-6 font-roboto text-2xl mobile:text-xl  w-max min-w-[10rem] ">
-              item you may like it
-            </h2>
-          )}
-          <div className="">
-            <div
-              className={` w-full grid grid-cols-5 mobile:grid-cols-2 small-device:grid-cols-3 tablet:grid-cols-4 laptop:grid-cols-5 gap-3 items-stretch`}
-            >
-              {relatedProduct.length > 0 &&
-                relatedProduct.map((product, index) => {
-                  return (
-                    <div key={product?.id || product?._id}>
-                      <ProductCard
-                        product={product}
-                        authToken={authToken}
-                        userDetail={userDetail}
-                      />
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        </div>
-
-        {/* review section  */}
-
-        <div className="review-section p-4">
-          <div className="flex gap-3 justify-between mb-3 items-center ">
-            <h2 className="text-4xl p-2 font-roboto font-bold">Reviews</h2>
-            {/* <p className="text-sm text-gray-500">
-              {productData?.review?.length} reviews
-            </p> */}
             {userDetail && authToken && (
-              <Button
-                btntext={"Write a Review"}
-                className={
-                  "rounded bg-blue-500 hover:bg-blue-700 p-2 text-white font-roboto text-sm w-max h-max"
-                }
+              <button
+                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-white font-roboto text-sm font-semibold transition-all duration-200 flex items-center gap-2 hover:scale-[1.02]"
                 onClick={handleClick}
-              />
+              >
+                <MdVerified />
+                Write a Review
+              </button>
             )}
           </div>
 
-          {/* all review section */}
-          {productData?.review?.length > 0 && (
-            <div className="flex gap-4 overflow-scroll mobile:flex-col mobile:overflow-hidden small-device:flex-row small-device:overflow-scroll ">
-              {productData?.review?.map((review, index) => {
-                return <ReviewCard review={review} key={index} />;
-              })}
+          {reviews.length > 0 ? (
+            <div className="flex gap-4 flex-wrap mobile:flex-col small-device:flex-row">
+              {reviews.map((review, index) => (
+                <ReviewCard review={review} key={index} />
+              ))}
+            </div>
+          ) : (
+            <div className={`
+              flex flex-col items-center justify-center py-12 rounded-2xl border-2 border-dashed
+              ${isDark ? "border-gray-700 text-gray-500" : "border-gray-300 text-gray-400"}
+            `}>
+              <svg className="w-12 h-12 mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              <p className="text-base font-semibold font-roboto">No reviews yet</p>
+              <p className="text-sm font-roboto mt-1">Be the first to share your experience!</p>
             </div>
           )}
         </div>
 
-        {/* review popup  */}
+        {/* ── Related Products ───────────────────────────────────────────────── */}
+        {relatedProduct.length > 0 && (
+          <div className={`related-product-section px-4 py-6 mt-2 border-t ${isDark ? "border-gray-800" : "border-gray-100"}`}>
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-1 h-7 bg-indigo-500 rounded-full" />
+                <h2 className={`font-bold font-roboto text-2xl mobile:text-xl ${isDark ? "text-white" : "text-gray-900"}`}>
+                  You May Also Like
+                </h2>
+              </div>
+              <div className="w-full grid grid-cols-5 mobile:grid-cols-2 small-device:grid-cols-3 tablet:grid-cols-4 laptop:grid-cols-5 gap-3 items-stretch">
+                {relatedProduct.map((product) => (
+                  <div key={product?.id || product?._id}>
+                    <ProductCard
+                      product={product}
+                      authToken={authToken}
+                      userDetail={userDetail}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
+        {/* ── Review Popup ───────────────────────────────────────────────────── */}
         {isReviewClicked && (
           <ReviewForm
             onClose={handleClick}
@@ -353,8 +540,8 @@ const ProductPage = () => {
             authToken={authToken}
           />
         )}
+
       </div>
-      // ).
     )
   );
 };
