@@ -135,7 +135,7 @@ const BuyNow = () => {
       method: "POST",
       url: `${SERVER_URL}/api/order/submit-order`,
       headers: { Authorization: `Bearer ${authToken}` },
-      data: { cartProduct: productArr, shippingAddress, paymentData, timeStamp: new Date().toLocaleString() },
+      data: { cartProduct: productArr, shippingAddress, paymentData },
     })
       .then(({ data, status }) => {
         if (data?.updatedShippingAddress) {

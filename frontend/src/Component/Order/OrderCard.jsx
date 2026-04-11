@@ -69,8 +69,11 @@ const OrderCard = ({ order }) => {
                   theme === "dark" ? "text-white" : "text-gray-900"
                 }`}
               >
-                {months?.[order?.orderDate?.month - 1]?.alphabetics}{" "}
-                {order?.orderDate?.day}, {order?.orderDate?.year}
+                {order?.orderDate ? new Date(order.orderDate).toLocaleDateString(undefined, {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                }) : ''}
               </p>
             </div>
             <div>

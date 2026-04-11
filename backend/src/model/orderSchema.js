@@ -28,7 +28,7 @@ const orderSchema = new mongoose.Schema(
         _id: false,
       },
     ],
-    orderDate: { type: String },
+    orderDate: { type: Date, default: Date.now },
     orderStatus: {
       type: String,
       enum: [

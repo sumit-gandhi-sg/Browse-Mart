@@ -15,11 +15,6 @@ const getAllOrderByUserId = async (req, res, next) => {
     const parsedLimit = Number(limit) > 0 ? Number(limit) : 5;
     const skip = (parsedPage - 1) * parsedLimit;
 
-    // Helper function to format dates
-    const formatDate = (originalDate) => {
-      const [month, day, year] = originalDate?.split(",")[0]?.split("/") || [];
-      return { day, month, year };
-    };
 
     const query = { customerId: activeUser?._id };
     const totalCount = await Order.countDocuments(query);
@@ -42,7 +37,7 @@ const getAllOrderByUserId = async (req, res, next) => {
             orderStatus: filteredOrderArr?.orderStatus,
             id: filteredOrderArr?._id,
             orderId: filteredOrderArr?.orderId,
-            orderDate: formatDate(filteredOrderArr?.orderDate),
+            orderDate: filteredOrderArr?.orderDate,
             orderItems: await Promise.all(
               filteredOrderArr?.orderItems?.map(async (item) => {
                 const productData = await Product?.findById(item?.productId);

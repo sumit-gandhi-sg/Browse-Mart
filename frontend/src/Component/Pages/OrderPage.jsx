@@ -80,7 +80,7 @@ const Orderpage = () => {
           <span className=" font-medium text-xl text-gray-600">
             Order Details
           </span>
-          <span>{orderDetails?.orderDate}</span>
+          <span>{orderDetails?.orderDate ? new Date(orderDetails.orderDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''}</span>
           <span className="">{orderDetails?.orderItems?.length} Products</span>
           {isCancelled && (
             <span className="rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-600">

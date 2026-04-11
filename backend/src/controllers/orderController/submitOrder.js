@@ -12,7 +12,7 @@ const submitOrder = async (req, res, next) => {
     const { methodName, methodDetail } = req?.body?.paymentData;
     const orderIds = [];
 
-    const timeStamp = req?.body?.timeStamp;
+    const orderDate = new Date(); // UTC timestamp from server
     const saveDefaultShippingAddress = (shippingAddress, activeUser) => {
       try {
         if (!activeUser) return;
@@ -111,7 +111,7 @@ const submitOrder = async (req, res, next) => {
         totalSellingPrice < 1000 ? totalSellingPrice * 0.1 : 0;
 
       const order = new Order({
-        orderId: generateOrderId(timeStamp),
+        orderId: generateOrderId(orderDate.toLocaleString()),
         customerId: activeUser?._id,
         orderItems: filteredProduct,
         shippingAddress: {
@@ -131,7 +131,7 @@ const submitOrder = async (req, res, next) => {
         //         (product?.price || product?.sellingPrice) * product?.quantity
         //     : totalAmount;
         // }, 0),
-        orderDate: timeStamp?.toLocaleString(),
+        orderDate: orderDate,
         sellerId: sellerId,
         totalMrpPrice: totalMrpPrice,
         totalSellingPrice: totalSellingPrice,
