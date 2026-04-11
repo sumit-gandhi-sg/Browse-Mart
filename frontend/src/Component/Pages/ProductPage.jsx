@@ -398,41 +398,62 @@ const ProductPage = () => {
 
             {/* Share Button */}
             <div className={`border-t pt-3 ${isDark ? "border-gray-700" : "border-gray-200"}`}>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className={`text-sm font-roboto font-semibold ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                  Share:
-                </span>
-                <span
+              <div className="flex flex-col gap-3">
+                {/* Share trigger */}
+                <button
                   onClick={() => setIsShareShow((prev) => !prev)}
-                  className={`cursor-pointer p-2 rounded-full transition-all duration-200
-                    ${isDark ? "hover:bg-gray-700 text-indigo-400" : "hover:bg-gray-100 text-indigo-500"}
+                  className={`
+                    flex items-center gap-2 w-max text-sm font-semibold font-roboto
+                    px-4 py-2 rounded-xl border transition-all duration-200
+                    ${isDark
+                      ? "border-gray-600 text-gray-300 hover:border-indigo-500 hover:text-indigo-400 hover:bg-indigo-900/20"
+                      : "border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50"
+                    }
                   `}
                 >
-                  <FaShare className="text-lg" />
-                </span>
-                {isShareShow && (
-                  <div className="flex gap-2">
-                    {socialMedia.map((media, index) => (
-                      <div className="group relative" key={index}>
-                        <span className={`
-                          absolute -top-8 left-1/2 -translate-x-1/2
-                          text-white text-xs px-2 py-1 rounded whitespace-nowrap
-                          bg-gray-700 hidden group-hover:block z-10
-                        `}>
-                          {media.name}
-                        </span>
-                        <a
-                          href={media.link + encodeURIComponent(message)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="social-media-icon"
-                        >
-                          {media.icon}
-                        </a>
-                      </div>
+                  <FaShare className={`transition-transform duration-300 ${isShareShow ? "rotate-45" : "rotate-0"}`} />
+                  {isShareShow ? "Close" : "Share this product"}
+                </button>
+
+                {/* Animated share panel */}
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  isShareShow ? "max-h-24 opacity-100" : "max-h-0 opacity-0"
+                }`}>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      {
+                        name: "WhatsApp",
+                        href: `https://wa.me/?text=${encodeURIComponent(message)}`,
+                        bg: "bg-[#25D366] hover:bg-[#1ebe5d]",
+                        icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.997 2C6.477 2 2 6.477 2 11.997c0 1.761.459 3.411 1.26 4.845L2 22l5.27-1.236A9.953 9.953 0 0011.997 22c5.52 0 9.997-4.477 9.997-9.997S17.517 2 11.997 2zm0 18.188a8.176 8.176 0 01-4.165-1.138l-.299-.178-3.128.733.745-3.063-.194-.311a8.188 8.188 0 119.041 3.957z"/></svg>,
+                      },
+                      {
+                        name: "LinkedIn",
+                        href: `https://www.linkedin.com/messaging/compose?message=${encodeURIComponent(message)}`,
+                        bg: "bg-[#0077B5] hover:bg-[#006399]",
+                        icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>,
+                      },
+                      {
+                        name: "Email",
+                        href: `mailto:?body=${encodeURIComponent(message)}`,
+                        bg: "bg-[#EA4335] hover:bg-[#d33b2c]",
+                        icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>,
+                      },
+                    ].map((platform) => (
+                      <a
+                        key={platform.name}
+                        href={platform.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-white text-xs font-semibold font-roboto transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm ${platform.bg}`}
+                      >
+                        {platform.icon}
+                        {platform.name}
+                      </a>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 

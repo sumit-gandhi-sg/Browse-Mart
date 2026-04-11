@@ -66,7 +66,7 @@ const ProductsContainer = () => {
     axios
       .get(`${SERVER_URL}/api/product/get-all-products`, {
         params: {
-          activeUserId: userDetail?.id,
+          activeUserId: userDetail?.id?.toString(),
           searchQuery,
           searchCategory,
           page: currentPage,
