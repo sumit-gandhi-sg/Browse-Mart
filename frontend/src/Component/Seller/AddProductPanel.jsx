@@ -168,20 +168,21 @@ export const AddProductPanel = () => {
 
   return (
     <div
-      className={`w-full rounded-lg shadow-md p-6 transition-all duration-300 ${
-        theme === "dark" ? "bg-gray-800" : "bg-white"
+      className={`w-full rounded-[24px] shadow-sm border p-6 md:p-8 transition-all duration-300 font-roboto ${
+        theme === "dark" ? "bg-gray-900 border-gray-800 text-white" : "bg-white border-gray-200 text-gray-900"
       }`}
     >
-      <div className="flex flex-col gap-4 mb-6 small-device:flex-row small-device:justify-between small-device:items-center">
+      {/* Header keeping the button at the top as originally structured */}
+      <div className="flex flex-col gap-4 mb-8 small-device:flex-row small-device:justify-between small-device:items-center">
         <div>
-          <h1 className="text-2xl font-semibold">Add New Product</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <h1 className="text-2xl font-extrabold tracking-tight">Add New Product</h1>
+          <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
             Create and publish a new product listing
           </p>
         </div>
         <div className="w-full small-device:w-auto">
           <Button
-            className="w-full small-device:w-auto min-w-[180px] px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:bg-purple-700 disabled:opacity-60"
+            className="w-full small-device:w-auto min-w-[180px] px-6 py-3 bg-purple-600 font-bold text-white rounded-xl shadow-md hover:bg-purple-700 hover:-translate-y-0.5 transition-all outline-none disabled:opacity-60 disabled:cursor-not-allowed"
             btntext={productUploading ? "Publishing..." : "Publish Product"}
             onClick={handleSubmit}
             loading={productUploading}
@@ -190,11 +191,14 @@ export const AddProductPanel = () => {
         </div>
       </div>
 
+      {/* Form structure completely reverted to original */}
       <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 small-device:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-3">
-            <label htmlFor="name">
-              Product Name <span className="required">*</span>
+        
+        {/* Row 1: Name and Brand */}
+        <div className="grid grid-cols-1 small-device:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="name" className={`font-semibold text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+              Product Name <span className="text-red-500">*</span>
             </label>
             <Input
               type="text"
@@ -203,54 +207,63 @@ export const AddProductPanel = () => {
               value={productForm?.name}
               onChange={handleChange}
               placeholder="Product Name"
-              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
+              className={`p-3 border-2 rounded-xl focus:ring-4 transition-all outline-none ${
+                error.name ? "border-red-500 focus:ring-red-500/20" :
+                theme === 'dark' ? "bg-gray-800 border-gray-700 focus:border-purple-500 focus:ring-purple-500/20" : "bg-gray-50 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
+              }`}
             />
-            {error.name && <p className="required-field-error">{error.name}</p>}
+            {error.name && <p className="text-red-500 text-xs font-bold">{error.name}</p>}
           </div>
 
-          <div className="flex flex-col gap-3">
-            <label htmlFor="brand">
-              Brand <span className="required">*</span>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="brand" className={`font-semibold text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+              Brand <span className="text-red-500">*</span>
             </label>
             <Select
               name="brand"
               id="brand"
-              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
+              className={`p-3 border-2 rounded-xl focus:ring-4 transition-all outline-none cursor-pointer ${
+                error.brand ? "border-red-500 focus:ring-red-500/20" :
+                theme === 'dark' ? "bg-gray-800 border-gray-700 focus:border-purple-500 focus:ring-purple-500/20" : "bg-gray-50 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
+              }`}
               onChange={handleChange}
               value={productForm?.brand}
               displayName="Select Brand"
               itemArray={productBrands}
             />
-            {error.brand && (
-              <p className="required-field-error">{error.brand}</p>
-            )}
+            {error.brand && <p className="text-red-500 text-xs font-bold">{error.brand}</p>}
           </div>
         </div>
 
+        {/* Row 2: Media */}
         <div>
-          <label className="block font-medium mb-1">Product Media</label>
+          <label className={`font-semibold text-sm block mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+            Product Media <span className="text-red-500">*</span>
+          </label>
           <div
             {...getRootProps()}
-            className={`w-full p-6 border-2 border-dashed rounded-md flex flex-col items-center justify-center text-center transition-all duration-300 cursor-pointer ${
+            className={`w-full p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center transition-all duration-300 cursor-pointer ${
               isDragActive
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                : error.image 
+                ? "border-red-400 bg-red-50 dark:bg-red-900/10"
                 : theme === "dark"
-                ? "border-gray-600 text-gray-300"
-                : "border-gray-300 text-gray-500"
+                ? "border-gray-600 bg-gray-800/50 hover:bg-gray-800 text-gray-300"
+                : "border-gray-300 bg-gray-50 hover:bg-gray-100/50 text-gray-500"
             }`}
           >
             <input {...getInputProps()} />
-            <span className="text-3xl">
+            <span className="text-4xl text-purple-500 mb-3">
               {images.length > 0 ? <FiImage /> : <FiUploadCloud />}
             </span>
-            <p className="my-2">
+            <p className="font-semibold mb-1">
               {isDragActive
                 ? "Drop product images here"
                 : "Drag and drop your product images here"}
             </p>
             <button
               type="button"
-              className="text-blue-600 underline cursor-pointer"
+              className="text-purple-600 dark:text-purple-400 font-bold hover:underline cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 open();
@@ -259,20 +272,22 @@ export const AddProductPanel = () => {
               Browse Files
             </button>
           </div>
-          {error.image && (
-            <p className="required-field-error mt-2">{error.image}</p>
-          )}
+          {error.image && <p className="text-red-500 text-xs font-bold mt-2">{error.image}</p>}
           {images.length > 0 && (
-            <div className="mt-4">
-              <ImagePreview image={images} />
+            <div className="mt-4 p-4 border rounded-xl dark:border-gray-800">
+              <ImagePreview 
+                 image={images} 
+                 onRemove={(indexToRemove) => setImages(prev => prev.filter((_, idx) => idx !== indexToRemove))} 
+              />
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 small-device:grid-cols-3 gap-4">
-          <div className="flex flex-col gap-3">
-            <label htmlFor="mrpPrice">
-              MRP Price <span className="required">*</span>
+        {/* Row 3: Prices & Stock */}
+        <div className="grid grid-cols-1 small-device:grid-cols-3 gap-6">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="mrpPrice" className={`font-semibold text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+              MRP Price <span className="text-red-500">*</span>
             </label>
             <Input
               type="number"
@@ -281,16 +296,17 @@ export const AddProductPanel = () => {
               value={productForm?.mrpPrice}
               onChange={handleChange}
               placeholder="MRP Price"
-              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
+              className={`p-3 border-2 rounded-xl focus:ring-4 transition-all outline-none ${
+                error.mrpPrice ? "border-red-500 focus:ring-red-500/20" :
+                theme === 'dark' ? "bg-gray-800 border-gray-700 focus:border-purple-500 focus:ring-purple-500/20" : "bg-gray-50 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
+              }`}
             />
-            {error.mrpPrice && (
-              <p className="required-field-error">{error.mrpPrice}</p>
-            )}
+            {error.mrpPrice && <p className="text-red-500 text-xs font-bold">{error.mrpPrice}</p>}
           </div>
 
-          <div className="flex flex-col gap-3">
-            <label htmlFor="sellingPrice">
-              Selling Price <span className="required">*</span>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="sellingPrice" className={`font-semibold text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+              Selling Price <span className="text-red-500">*</span>
             </label>
             <Input
               type="number"
@@ -299,16 +315,17 @@ export const AddProductPanel = () => {
               value={productForm?.sellingPrice}
               onChange={handleChange}
               placeholder="Selling Price"
-              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
+              className={`p-3 border-2 rounded-xl focus:ring-4 transition-all outline-none ${
+                error.sellingPrice ? "border-red-500 focus:ring-red-500/20" :
+                theme === 'dark' ? "bg-gray-800 border-gray-700 focus:border-purple-500 focus:ring-purple-500/20" : "bg-gray-50 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
+              }`}
             />
-            {error.sellingPrice && (
-              <p className="required-field-error">{error.sellingPrice}</p>
-            )}
+            {error.sellingPrice && <p className="text-red-500 text-xs font-bold">{error.sellingPrice}</p>}
           </div>
 
-          <div className="flex flex-col gap-3">
-            <label htmlFor="stock">
-              Stock Quantity <span className="required">*</span>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="stock" className={`font-semibold text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+              Stock Quantity <span className="text-red-500">*</span>
             </label>
             <Input
               type="number"
@@ -317,17 +334,19 @@ export const AddProductPanel = () => {
               value={productForm?.stock}
               onChange={handleChange}
               placeholder="Stock"
-              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
+              className={`p-3 border-2 rounded-xl focus:ring-4 transition-all outline-none ${
+                error.stock ? "border-red-500 focus:ring-red-500/20" :
+                theme === 'dark' ? "bg-gray-800 border-gray-700 focus:border-purple-500 focus:ring-purple-500/20" : "bg-gray-50 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
+              }`}
             />
-            {error.stock && (
-              <p className="required-field-error">{error.stock}</p>
-            )}
+            {error.stock && <p className="text-red-500 text-xs font-bold">{error.stock}</p>}
           </div>
         </div>
 
-        <div className="w-full flex flex-col gap-3">
-          <label htmlFor="description">
-            Description <span className="required">*</span>
+        {/* Row 4: Description */}
+        <div className="w-full flex flex-col gap-2">
+          <label htmlFor="description" className={`font-semibold text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+            Description <span className="text-red-500">*</span>
           </label>
           <TextArea
             name="description"
@@ -335,46 +354,44 @@ export const AddProductPanel = () => {
             value={productForm?.description}
             onChange={handleChange}
             placeholder="Description"
-            className={`resize-none w-full min-h-[150px] p-2 border-2 outline-none rounded ${
-              theme === "dark"
-                ? "bg-gray-700 text-white border-gray-600 focus:border-gray-300"
-                : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
+            className={`resize-y w-full min-h-[150px] p-3 border-2 rounded-xl focus:ring-4 transition-all outline-none ${
+              error.description ? "border-red-500 focus:ring-red-500/20" :
+              theme === 'dark' ? "bg-gray-800 text-white border-gray-700 focus:border-purple-500 focus:ring-purple-500/20" : "bg-gray-50 text-gray-900 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
             }`}
           />
-          {error.description && (
-            <p className="required-field-error">{error.description}</p>
-          )}
+          {error.description && <p className="text-red-500 text-xs font-bold">{error.description}</p>}
         </div>
 
-        <div className="grid grid-cols-1 small-device:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-3">
-            <label htmlFor="category">
-              Category <span className="required">*</span>
+        {/* Row 5: Categories */}
+        <div className="grid grid-cols-1 small-device:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="category" className={`font-semibold text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+              Category <span className="text-red-500">*</span>
             </label>
             <Select
               name="category"
               id="category"
-              className="p-2 bg-gray-100 border-2 rounded border-gray-300"
+              className={`p-3 border-2 rounded-xl focus:ring-4 transition-all outline-none cursor-pointer ${
+                error.category ? "border-red-500 focus:ring-red-500/20" :
+                theme === 'dark' ? "bg-gray-800 border-gray-700 focus:border-purple-500 focus:ring-purple-500/20" : "bg-gray-50 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
+              }`}
               onChange={handleChange}
               value={productForm?.category}
               itemArray={productCategory}
               displayName="Select Category"
             />
-            {error.category && (
-              <p className="required-field-error">{error.category}</p>
-            )}
+            {error.category && <p className="text-red-500 text-xs font-bold">{error.category}</p>}
           </div>
 
-          <div className="flex flex-col gap-3">
-            <label htmlFor="subCategory">
-              Sub Category <span className="required">*</span>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="subCategory" className={`font-semibold text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+              Sub Category <span className="text-red-500">*</span>
             </label>
             <select
               name="subCategory"
-              className={`p-2 bg-gray-100 border-2 rounded border-gray-300 outline-gray-400 outline-0 transition-all duration-300 ${
-                theme === "dark"
-                  ? "bg-gray-700 text-white border-gray-600 focus:border-gray-300"
-                  : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
+              className={`p-3 border-2 rounded-xl focus:ring-4 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                error.subCategory ? "border-red-500 focus:ring-red-500/20" :
+                theme === 'dark' ? "bg-gray-800 text-white border-gray-700 focus:border-purple-500 focus:ring-purple-500/20" : "bg-gray-50 text-gray-900 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
               }`}
               id="subCategory"
               disabled={
@@ -396,9 +413,7 @@ export const AddProductPanel = () => {
                   : "";
               })}
             </select>
-            {error.subCategory && (
-              <p className="required-field-error">{error.subCategory}</p>
-            )}
+            {error.subCategory && <p className="text-red-500 text-xs font-bold">{error.subCategory}</p>}
           </div>
         </div>
       </form>
