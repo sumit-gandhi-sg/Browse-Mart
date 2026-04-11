@@ -224,7 +224,9 @@ export const ProductsPanel = () => {
                             <p className={`font-bold leading-tight line-clamp-1 max-w-[250px] ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                               {product?.name}
                             </p>
-                            <p className="text-[10px] font-mono mt-1 text-gray-500">ID: {product?._id}</p>
+                            <p className="text-[11px] mt-1 text-gray-500 line-clamp-1 max-w-[250px]" title={product?.description}>
+                              {product?.description}
+                            </p>
                           </div>
                         </td>
                         <td className="p-4">

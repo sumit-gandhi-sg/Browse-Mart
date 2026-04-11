@@ -23,7 +23,7 @@ const getAllProductUsingSellerId = async (req, res) => {
       .sort({ _id: -1 })
       .skip(skip)
       .limit(limit)
-      .select("-review -description -__v");
+      .select("-review -__v");
     const start = totalCount === 0 ? 0 : skip + 1;
     const end = Math.min(skip + allProduct.length, totalCount);
     // console?.log(allProduct);
