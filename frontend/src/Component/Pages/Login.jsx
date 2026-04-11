@@ -6,7 +6,7 @@ import { customToast, swalCustomConfiguration } from "../../utility/constant";
 import axios from "axios";
 import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
 import { FaMoon, FaSun } from "react-icons/fa6";
-import { guestUser, sellerUser } from "../../utility/constant";
+import { guestUser, sellerUser, adminUser } from "../../utility/constant";
 import { BiLoaderAlt } from "react-icons/bi";
 import { useAuth } from "../../Context/authContext";
 import { checkValidation } from "../../utility/constant";
@@ -33,6 +33,7 @@ const Login = () => {
     form: false,
     guestLogin: false,
     sellerLogin: false,
+    adminLogin: false,
     otpVerification: false,
   });
   const redirect = new URLSearchParams(location?.search)?.get("redirect");
@@ -183,6 +184,10 @@ const Login = () => {
   const handleSellerLogin = (e) => {
     e.preventDefault();
     handleLogin(sellerUser, "sellerLogin");
+  };
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    handleLogin(adminUser, "adminLogin");
   };
   const handleInput = (e) => {
     const { name, value } = e.target;
@@ -359,6 +364,24 @@ const Login = () => {
                   onClick={handleSellerLogin}
                   btntext={"Continue with Seller"}
                   disabled={isProcessing.sellerLogin}
+                />
+
+                <Button
+                  className={`w-full mt-2 flex items-center justify-center gap-2 p-2 rounded-md ${
+                    theme === "dark"
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-200 text-gray-900"
+                  }`}
+                  icon={
+                    isProcessing.adminLogin ? (
+                      <BiLoaderAlt className="animate-spin h-6 w-6" />
+                    ) : (
+                      ""
+                    )
+                  }
+                  onClick={handleAdminLogin}
+                  btntext={"Continue with Admin"}
+                  disabled={isProcessing.adminLogin}
                 />
                 {/* <Button
               className={`w-full flex items-center justify-center gap-2 p-2 rounded-md ${

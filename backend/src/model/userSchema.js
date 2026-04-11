@@ -14,9 +14,6 @@ const userSchema = new mongoose.Schema(
       default: "consumer",
     },
     sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "SellerUser" },
-    // cart: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
-    // wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
-    // order: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
     phoneNumber: { type: String },
     address: { type: String },
     profilePic: { type: String },
@@ -51,8 +48,13 @@ const userSchema = new mongoose.Schema(
     otp: { type: String, default: null },
     otpExpireAt: { type: Date },
     isVerified: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ["active", "blocked"],
+      default: "active",
+    },
   },
-  { timeStampes: true }
+  { timeStampes: true } // Preserving typo as it was in original
 );
 
 userSchema.pre("save", async function (next) {

@@ -7,6 +7,8 @@ import userRoutes from "./routes/userRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import sellerRoutes from "./routes/sellerRoutes.js";
 import authRoutes from "./routes/authRoute.js";
+import adminRoutes from "./routes/adminRoutes.js";
+
 const app = express();
 const CORS_ORIGIN_URL = process.env.CORS_ORIGIN_URL || "*";
 app.use(
@@ -25,6 +27,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/seller", sellerRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", function (req, res) {
   res.send("Hello, bro");

@@ -18,6 +18,16 @@ const login = async (req, res, next) => {
         .json({ success: false, message: "User Not Found" });
     }
 
+    // --- ADMIN ENFORCEMENT: Block Suspended Users Instantly ---
+    if (existingUser.status === "blocked") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been suspended by the administrator.",
+      });
+    }
+    // --------------------------------------------------------
+
+
     const validPassword = await existingUser.passwordCompare(password);
     if (!validPassword) {
       return res

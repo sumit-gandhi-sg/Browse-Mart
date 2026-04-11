@@ -140,6 +140,10 @@ export const sellerUser = {
   email: "seller@gmail.com",
   password: "seller123",
 };
+export const adminUser = {
+  email: "admin@gmail.com",
+  password: "adminuser",
+};
 
 export const sellerRegistrationInputFields = [
   {

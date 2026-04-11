@@ -4,7 +4,7 @@ import { MdClose } from "react-icons/md";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { NavLink } from "react-router-dom";
 
-const SideBar = ({ tabs = [], activeTab, setActiveTab, classNames = {} }) => {
+const SideBar = ({ title = "Seller Panel", tabs = [], activeTab, setActiveTab, classNames = {} }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme } = useTheme();
 
@@ -62,7 +62,7 @@ const SideBar = ({ tabs = [], activeTab, setActiveTab, classNames = {} }) => {
         }`}
       >
         <div className={mergedClassNames.header}>
-          <h2 className={mergedClassNames.title}>Seller Panel</h2>
+          <h2 className={mergedClassNames.title}>{title}</h2>
           <button
             className={mergedClassNames.closeButton}
             aria-label="Close sidebar"
@@ -79,6 +79,7 @@ const SideBar = ({ tabs = [], activeTab, setActiveTab, classNames = {} }) => {
               <li key={index} className={mergedClassNames.item}>
                 <NavLink
                   to={item?.navigate}
+                  end={item?.navigate === "" || item?.navigate === "dashboard"}
                   onClick={() => {
                     setActiveTab && setActiveTab(index);
                     setSidebarOpen(false);

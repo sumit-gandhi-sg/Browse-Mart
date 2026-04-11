@@ -11,7 +11,7 @@ const Footer = ({ userDetail }) => {
     <footer className="bg-gray-900 text-gray-300 py-10 px-5 mobile:px-10 tablet:px-20 border-t-2">
       <div
         className={`max-w-7xl mx-auto grid grid-cols-1 small-device:grid-cols-2 tablet:grid-cols-3  ${
-          userDetail?.userType === "seller"
+          userDetail?.userType === "seller" || userDetail?.userType === "admin"
             ? "laptop:grid-cols-5"
             : "laptop:grid-cols-4"
         } gap-8`}
@@ -69,6 +69,23 @@ const Footer = ({ userDetail }) => {
               <li className="hover:text-white cursor-pointer">Track Order</li>
               <li className="hover:text-white cursor-pointer">Returns</li>
               <li className="hover:text-white cursor-pointer">Wishlist</li>
+            </ul>
+          </div>
+        )}
+        
+        {userDetail?.userType === "admin" && (
+          <div>
+            <h3 className="text-white text-lg font-semibold">Admin Panel</h3>
+            <ul className="mt-2 space-y-2 text-sm">
+              <li className="hover:text-white cursor-pointer">
+                <Link to={"/admin"}>Admin Dashboard</Link>
+              </li>
+              <li className="hover:text-white cursor-pointer">
+                <Link to={"/admin/users"}>User Management</Link>
+              </li>
+              <li className="hover:text-white cursor-pointer">
+                <Link to={"/admin/products"}>Global Inventory</Link>
+              </li>
             </ul>
           </div>
         )}

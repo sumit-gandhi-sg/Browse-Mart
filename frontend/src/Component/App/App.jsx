@@ -14,9 +14,25 @@ import Profile1 from "../Profile/profile1";
 import { useAuth } from "../../Context/authContext";
 import { useUser } from "../../Context/userContext";
 import { ConsumerRoutes, SellerRoutes } from "../../routes";
+import AdminRoutes from "../../routes/AdminRoutes";
 import AppLayout from "../AppLayout/AppLayout";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+
+// Global Security Interceptor
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 403) {
+      if (error.response.data?.message?.includes("suspended")) {
+        // Enforce block mechanism globally
+        localStorage.removeItem("AuthToken");
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 const router = createBrowserRouter([
   {
@@ -41,6 +57,7 @@ const router = createBrowserRouter([
     children: [
       ...ConsumerRoutes,
       SellerRoutes,
+      AdminRoutes,
       {
         path: "/profile",
         element: <Profile1 />,
