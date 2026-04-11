@@ -1,4 +1,5 @@
 import Product from "../../model/productSchema.js";
+import { deleteImageFromCloudinary } from "../../utility/cloudinary.js";
 
 const deleteProduct = async (req, res) => {
   try {
@@ -19,6 +20,12 @@ const deleteProduct = async (req, res) => {
         success: false,
         message: "Unauthorized access",
       });
+    }
+
+    // Securely wipe all linked images from Cloudinary buckets to prevent ghost files
+    if (product.image && Array.isArray(product.image)) {
+      const destructionPromises = product.image.map((url) => deleteImageFromCloudinary(url));
+      await Promise.all(destructionPromises);
     }
 
     await Product.findByIdAndDelete(productId);

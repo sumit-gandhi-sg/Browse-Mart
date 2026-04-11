@@ -34,7 +34,7 @@ const ImagePreview = ({ image, onRemove }) => {
       {/* Main Large Preview Area */}
       <div className="relative w-full h-[280px] bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow-inner group border border-gray-200 dark:border-gray-700">
         <img
-          src={URL.createObjectURL(image[safeIndex])}
+          src={typeof image[safeIndex] === 'string' ? image[safeIndex] : URL.createObjectURL(image[safeIndex])}
           className="w-full h-full object-contain transition-transform duration-300"
           alt="Product Preview"
         />
@@ -100,7 +100,7 @@ const ImagePreview = ({ image, onRemove }) => {
               }`}
             >
               <img
-                src={URL.createObjectURL(file)}
+                src={typeof file === 'string' ? file : URL.createObjectURL(file)}
                 alt={`Thumbnail ${idx}`}
                 className="w-full h-full object-cover"
               />

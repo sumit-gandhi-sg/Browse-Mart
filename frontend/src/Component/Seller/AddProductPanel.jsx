@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { FiImage, FiUploadCloud } from "react-icons/fi";
+import { BiLoaderAlt } from "react-icons/bi";
 import { useDropzone } from "react-dropzone";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
 import { Button, Input, Select, TextArea } from "../../LIBS";
@@ -23,9 +24,44 @@ export const AddProductPanel = () => {
   const [error, setError] = useState({});
   const [images, setImages] = useState([]);
   const [productUploading, setProductUploading] = useState(false);
+  const [isFetchingInitialData, setIsFetchingInitialData] = useState(false);
   const { theme } = useTheme();
   const { authToken } = useAuth();
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+
+  useEffect(() => {
+    if (isEditMode && authToken) {
+      fetchProductDetails();
+    }
+  }, [id, authToken]);
+
+  const fetchProductDetails = async () => {
+    try {
+      setIsFetchingInitialData(true);
+      const response = await axios.get(`${SERVER_URL}/api/product/${id}`);
+      const productData = response?.data?.product;
+      if (productData) {
+        setProductForm({
+          name: productData.name || "",
+          mrpPrice: productData.mrpPrice?.toString() || "",
+          sellingPrice: productData.sellingPrice?.toString() || "",
+          description: productData.description || "",
+          category: productData.category || "",
+          stock: productData.stock?.toString() || "",
+          brand: productData.brand || "",
+          subCategory: productData.subCategory || "",
+        });
+        setImages(productData.image || []);
+      }
+    } catch (error) {
+      console.log(error);
+      swalWithCustomConfiguration.fire("Error", "Could not fetch product details", "error");
+    } finally {
+      setIsFetchingInitialData(false);
+    }
+  };
 
   const onDrop = (acceptedFiles) => {
     setImages((prev) => [...prev, ...acceptedFiles]);
@@ -104,22 +140,29 @@ export const AddProductPanel = () => {
       setProductUploading(true);
       setError({});
 
-      // Shifted to Backend: Build a robust multipart/form-data object here
+      // Separate Kept Strings and New Files
+      const existingImages = images.filter((img) => typeof img === "string");
+      const newImageFiles = images.filter((img) => typeof img !== "string");
+
       const formData = new FormData();
       
-      // Append all textual product attributes
       Object.keys(productForm).forEach((key) => {
          formData.append(key, productForm[key]);
       });
       
-      // Append all raw binary image files under the "image" field (must match multer array name)
-      images.forEach((file) => {
+      // Append Kept Images natively
+      existingImages.forEach((url) => {
+         formData.append("existingImages", url);
+      });
+
+      // Append New file uploads
+      newImageFiles.forEach((file) => {
          formData.append("image", file);
       });
 
       const response = await axios({
-        method: "POST",
-        url: `${SERVER_URL}/api/product/add-product`,
+        method: isEditMode ? "PUT" : "POST",
+        url: isEditMode ? `${SERVER_URL}/api/seller/product/${id}` : `${SERVER_URL}/api/product/add-product`,
         data: formData,
         headers: {
           "Content-Type": "multipart/form-data",
@@ -127,10 +170,10 @@ export const AddProductPanel = () => {
         },
       });
 
-      if (response.status === 201) {
+      if (response.status === 201 || response.status === 200) {
         await swalWithCustomConfiguration.fire(
-          "Product successfully uploaded",
-          "Your product has been added.",
+          isEditMode ? "Product successfully updated" : "Product successfully uploaded",
+          isEditMode ? "Your product changes have been saved." : "Your product has been added.",
           "success"
         );
         setProductForm(initialProductDetails);
@@ -159,18 +202,27 @@ export const AddProductPanel = () => {
         theme === "dark" ? "bg-gray-900 border-gray-800 text-white" : "bg-white border-gray-200 text-gray-900"
       }`}
     >
-      {/* Header keeping the button at the top as originally structured */}
-      <div className="flex flex-col gap-4 mb-8 small-device:flex-row small-device:justify-between small-device:items-center">
+      {isFetchingInitialData ? (
+        <div className="flex flex-col items-center justify-center py-32 opacity-80">
+          <BiLoaderAlt className="animate-spin text-5xl mb-4 text-indigo-500" />
+          <p className="font-bold tracking-widest uppercase text-sm text-gray-500">Loading Product Data...</p>
+        </div>
+      ) : (
+        <>
+          {/* Header keeping the button at the top as originally structured */}
+          <div className="flex flex-col gap-4 mb-8 small-device:flex-row small-device:justify-between small-device:items-center">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Add New Product</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">
+            {isEditMode ? "Edit Product" : "Add New Product"}
+          </h1>
           <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-            Create and publish a new product listing
+            {isEditMode ? "Modify your selected product listing" : "Create and publish a new product listing"}
           </p>
         </div>
         <div className="w-full small-device:w-auto">
           <Button
-            className="w-full small-device:w-auto min-w-[180px] px-6 py-3 bg-purple-600 font-bold text-white rounded-xl shadow-md hover:bg-purple-700 hover:-translate-y-0.5 transition-all outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-            btntext={productUploading ? "Publishing..." : "Publish Product"}
+            className="w-full small-device:w-auto min-w-[180px] px-6 py-3 bg-indigo-600 font-bold text-white rounded-xl shadow-md hover:bg-indigo-700 hover:-translate-y-0.5 transition-all outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+            btntext={productUploading ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Product" : "Publish Product")}
             onClick={handleSubmit}
             loading={productUploading}
             disabled={productUploading}
@@ -404,6 +456,8 @@ export const AddProductPanel = () => {
           </div>
         </div>
       </form>
+        </>
+      )}
     </div>
   );
 };

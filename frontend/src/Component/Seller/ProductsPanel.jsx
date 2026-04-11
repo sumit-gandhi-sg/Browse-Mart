@@ -3,7 +3,7 @@ import { Button, Input, SectionTitle, Select, ToggleSwitch } from "../../LIBS";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BiLoaderAlt } from "react-icons/bi";
-import { FaTrash, FaSearch, FaBoxOpen, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaTrash, FaSearch, FaBoxOpen, FaChevronLeft, FaChevronRight, FaPen } from "react-icons/fa";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
 import { formatNumber, productCategory, swalWithCustomConfiguration } from "../../utility/constant";
@@ -257,16 +257,29 @@ export const ProductsPanel = () => {
                           </div>
                         </td>
                         <td className="p-4 pr-6 text-right">
-                          <Button
-                            className={`p-2.5 rounded-lg border-2 inline-flex items-center justify-center transition-all duration-300 disabled:opacity-50 ${
-                              theme === "dark" ? "border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500 bg-red-500/10" 
-                                               : "border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 bg-white"
-                            }`}
-                            btntext=""
-                            icon={ deletingProductId === product?._id ? <BiLoaderAlt className="animate-spin text-base" /> : <FaTrash className="text-base" /> }
-                            onClick={() => handleDeleteProduct(product?._id)}
-                            disabled={deletingProductId === product?._id}
-                          />
+                          <div className="flex items-center justify-end gap-2">
+                            <Link to={`/seller/products/edit/${product?._id}`}>
+                              <Button
+                                className={`p-2.5 rounded-lg border-2 inline-flex items-center justify-center transition-all duration-300 ${
+                                  theme === "dark" ? "border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500 bg-indigo-500/10" 
+                                                   : "border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 bg-white"
+                                }`}
+                                btntext=""
+                                icon={<FaPen className="text-base" />}
+                              />
+                            </Link>
+
+                            <Button
+                              className={`p-2.5 rounded-lg border-2 inline-flex items-center justify-center transition-all duration-300 disabled:opacity-50 ${
+                                theme === "dark" ? "border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500 bg-red-500/10" 
+                                                 : "border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 bg-white"
+                              }`}
+                              btntext=""
+                              icon={ deletingProductId === product?._id ? <BiLoaderAlt className="animate-spin text-base" /> : <FaTrash className="text-base" /> }
+                              onClick={() => handleDeleteProduct(product?._id)}
+                              disabled={deletingProductId === product?._id}
+                            />
+                          </div>
                         </td>
                       </tr>
                     ))}

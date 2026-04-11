@@ -30,3 +30,27 @@ export const uploadImageToCloudinary = (fileBuffer, folderName = "browsemart-pro
     uploadStream.end(fileBuffer);
   });
 };
+
+/**
+ * Extracts public_id from secure URL and deletes the asset from Cloudinary.
+ */
+export const deleteImageFromCloudinary = async (secureUrl) => {
+  try {
+    if (!secureUrl) return;
+    
+    // Example secureUrl: "https://res.cloudinary.com/xyz/image/upload/v123456/browsemart-products/abcde.jpg"
+    const parts = secureUrl.split("/");
+    const filenameWithExtension = parts.pop();
+    const folderName = parts.pop();
+    const filename = filenameWithExtension.split(".")[0];
+    
+    const publicId = `${folderName}/${filename}`;
+    
+    // Secure background deletion
+    const result = await cloudinary.uploader.destroy(publicId);
+    return result;
+  } catch (error) {
+    console.error("Cloudinary Destroy Error:", error);
+    return null;
+  }
+};

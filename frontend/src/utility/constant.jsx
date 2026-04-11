@@ -868,9 +868,9 @@ export const checkValidation = (data = {}, requireData) => {
     const isRequired = requiredKeys.includes(key);
     if (isRequired) {
       if (
-        value?.trim() === undefined ||
-        value?.trim() === null ||
-        value?.trim() === "" ||
+        value === undefined ||
+        value === null ||
+        value?.toString()?.trim() === "" ||
         (Array.isArray(value) && value.length === 0)
       ) {
         errors[key] = `${toCapitalizeCase(key)} is required!`;

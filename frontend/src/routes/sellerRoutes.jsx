@@ -37,6 +37,10 @@ const SellerRoutes = {
       element: <AddProductPanel />,
     },
     {
+      path: "products/edit/:id",
+      element: <AddProductPanel />,
+    },
+    {
       path: "orders",
       element: <Orders />,
     },
