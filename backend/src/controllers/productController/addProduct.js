@@ -1,4 +1,6 @@
 import Product from "../../model/productSchema.js";
+import { uploadImageToCloudinary } from "../../utility/cloudinary.js";
+
 const addProduct = async (req, res) => {
   try {
     const {
@@ -6,68 +8,71 @@ const addProduct = async (req, res) => {
       sellingPrice,
       mrpPrice,
       description,
-      image,
       category,
       stock,
       brand,
       subCategory,
     } = req.body;
+    
+    
     const foundedUser = req.user;
     if (foundedUser?.userType !== "seller") {
       return res.status(401).json({
         success: false,
-        messsage: "unauthorize access you don't have seller account",
+        message: "unauthorized access you don't have seller account",
       });
     }
+
+    // `req.files` will be populated by the multer array middleware
+    const files = req.files;
+
     if (
       !name ||
       !mrpPrice ||
       !sellingPrice ||
       !description ||
-      !image ||
       !category ||
       !stock ||
-      !brand
+      !brand ||
+      !files ||
+      files.length === 0
     ) {
       return res.status(400).json({
         success: false,
-        message: "Please fill all fields",
+        message: "Please fill all fields and upload at least one image.",
       });
     }
 
+    // Process all incoming memory buffers to Cloudinary securely in parallel
+    const uploadPromises = files.map((file) => uploadImageToCloudinary(file.buffer));
+    const imageUrls = await Promise.all(uploadPromises);
+
     const newProduct = new Product({
       name: name,
-      mrpPrice: mrpPrice,
+      mrpPrice: Number(mrpPrice),
+      sellingPrice: Number(sellingPrice),
       description: description,
-      image: image,
+      image: imageUrls,
       category: category,
-      stock: stock,
-      // userID: foundedUser?._id,
+      stock: Number(stock),
       sellerId: foundedUser?.sellerId,
       brand: brand,
-      subCategory: subCategory,
-      sellingPrice,
+      subCategory: subCategory || "",
     });
+    
     await newProduct.save();
+    
     return res.status(201).json({
       success: true,
-      message: "data Saved and Uploaded!",
+      message: "Data Saved and Uploaded Sucessfully!",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Add Product Error:", error);
     res?.status(500)?.json({
       success: false,
       message: "Error in uploading product, Please try again later.",
-    }); // Or a more specific message based on the error
+    });
   }
 };
-export default addProduct;
-// try {
-//     const newProduct = new product.insertOne({
 
-//     });
-//     await newProduct.save();
-//     res.status(201).json(newProduct);
-// } catch (error) {
-//     res.status(400).json({message: error.message});
-// }
+export default addProduct;

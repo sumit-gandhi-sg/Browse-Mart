@@ -49,24 +49,7 @@ export const AddProductPanel = () => {
     setError((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const uploadImagesToCloudinary = async () => {
-    const uploadPromises = images.map(async (file) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "mycloud");
-      formData.append("cloud_name", CLOUD_NAME);
-
-      const response = await axios({
-        method: "POST",
-        url: `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        data: formData,
-      });
-
-      return response?.data?.secure_url?.toString();
-    });
-
-    return Promise.all(uploadPromises);
-  };
+  // The client-side Cloudinary logic has been removed. Uploads are strictly handled by the Backend Node Server.
 
   const validateForm = () => {
     const requiredFields = [
@@ -121,21 +104,25 @@ export const AddProductPanel = () => {
       setProductUploading(true);
       setError({});
 
-      const uploadedImages = await uploadImagesToCloudinary();
-      const payload = {
-        ...productForm,
-        image: uploadedImages,
-        mrpPrice: Number(productForm.mrpPrice),
-        sellingPrice: Number(productForm.sellingPrice),
-        stock: Number(productForm.stock),
-      };
+      // Shifted to Backend: Build a robust multipart/form-data object here
+      const formData = new FormData();
+      
+      // Append all textual product attributes
+      Object.keys(productForm).forEach((key) => {
+         formData.append(key, productForm[key]);
+      });
+      
+      // Append all raw binary image files under the "image" field (must match multer array name)
+      images.forEach((file) => {
+         formData.append("image", file);
+      });
 
       const response = await axios({
         method: "POST",
         url: `${SERVER_URL}/api/product/add-product`,
-        data: payload,
+        data: formData,
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${authToken}`,
         },
       });

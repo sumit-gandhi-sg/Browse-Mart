@@ -1,5 +1,10 @@
 import express from "express";
+import multer from "multer";
+
 const router = express.Router();
+
+// Memory storage keeps the files as Buffer objects directly in RAM
+const upload = multer({ storage: multer.memoryStorage() });
 
 import addProduct from "../controllers/productController/addProduct.js";
 import getAllProduct from "../controllers/productController/getAllProduct.js";
@@ -9,7 +14,10 @@ import getRelatedProduct from "../controllers/productController/getRelatedProduc
 import submitReview from "../controllers/reviewController/submitReview.js";
 
 import userAuthentication from "../middleware/userAuthentication.js";
-router.route("/add-product").post(userAuthentication, addProduct);
+
+// Add multer middleware handling mutiple files under the field name 'image'
+router.route("/add-product").post(userAuthentication, upload.array("image"), addProduct);
+
 router.route("/get-all-products").get(getAllProduct);
 router.route("/get-related-product").get(getRelatedProduct);
 router.route("/:id").get(getProductById);
