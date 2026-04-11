@@ -9,79 +9,90 @@ import {
   generateFutureYearsForExpiryDate,
   months,
 } from "../../utility/constant";
-import "./style.css";
 import { useTheme } from "../../Context/themeContext";
 import { Loader, Button, Input } from "../../LIBS";
 import { useAuth } from "../../Context/authContext";
 import { useUser } from "../../Context/userContext";
-// import { FaRupeeSign } from "react-icons/fa";
-// const LOCATION_SERVER_URL = import.meta.env.VITE_LOCATION_FETCHING_SERVER_URL;
-// const LOCATION_API = import.meta.env.VITE_LOCATION_FETCHING_API_KEY;
+import { MdLocationOn, MdPayment, MdShoppingBag, MdCheckCircle, MdCreditCard } from "react-icons/md";
+import { FaLock, FaTruck, FaTag } from "react-icons/fa";
+import { BsLightningChargeFill } from "react-icons/bs";
+import "./style.css";
+
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+
+/* ── Reusable styled field wrapper ── */
+const FieldGroup = ({ label, required, error, children }) => (
+  <div className="flex flex-col gap-1.5">
+    {label && (
+      <label className="text-sm font-semibold font-roboto text-gray-600 dark:text-gray-300">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+    )}
+    {children}
+    {error && <p className="text-red-500 text-xs font-roboto">{error}</p>}
+  </div>
+);
+
+/* ── Section card wrapper ── */
+const SectionCard = ({ icon, title, badge, isDark, children }) => (
+  <div className={`rounded-2xl border p-5 flex flex-col gap-4 ${
+    isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200 shadow-sm"
+  }`}>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className="p-2 rounded-xl bg-indigo-100 text-indigo-600">{icon}</div>
+        <h2 className={`font-bold font-roboto text-base ${isDark ? "text-white" : "text-gray-900"}`}>{title}</h2>
+      </div>
+      {badge}
+    </div>
+    <div className={`border-t ${isDark ? "border-gray-700" : "border-gray-100"}`} />
+    {children}
+  </div>
+);
+
+/* ── Themed input class builder ── */
+const inputCls = (isDark, extraCls = "") =>
+  `w-full px-3 py-2.5 rounded-xl border-2 outline-none font-roboto text-sm transition-all duration-200
+  ${isDark
+    ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-indigo-500"
+    : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-indigo-400 focus:bg-white"
+  } ${extraCls}`;
 
 const BuyNow = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { authToken } = useAuth();
-
   const { productId } = useParams();
   const { userDetail, setUserDetail } = useUser();
+  const isDark = theme === "dark";
+
   const [isorderSubmitting, setIsOrderSubmitting] = useState(false);
   const [productArr, setProductArr] = useState([]);
   const [isDataFetching, setIsDataFetching] = useState(false);
-  const [countryList, setCountryList] = useState([]);
-  const [paymentData, setPaymentData] = useState({
-    methodName: "",
-    methodDetail: {},
-  });
-
+  const [paymentData, setPaymentData] = useState({ methodName: "", methodDetail: {} });
   const [errors, setErrors] = useState({});
   const [shippingAddress, setShippingAddress] = useState({});
   const [isError, setIsError] = useState({});
-  const totalPrice = productArr?.reduce((total, product) => {
-    return (
-      total + (product?.sellingPrice || product?.price) * product?.quantity
-    );
-  }, 0);
 
-  const shippingCharges = totalPrice < 1000 ? totalPrice * 0.1 : 0;
-  //Getting Single Product Data By Id
+  const totalMRP = productArr?.reduce((t, p) => t + (p?.mrpPrice || p?.price) * p?.quantity, 0);
+  const totalSelling = productArr?.reduce((t, p) => t + (p?.sellingPrice || p?.price) * p?.quantity, 0);
+  const totalDiscount = totalMRP - totalSelling;
+  const shippingCharges = totalSelling < 1000 ? Math.round(totalSelling * 0.1) : 0;
+  const grandTotal = totalSelling + shippingCharges;
+
+  /* ── API Calls (unchanged) ── */
   const getProductDataById = () => {
     setIsDataFetching(true);
-    axios({
-      method: "get",
-      url: `${SERVER_URL}/api/product/${productId}`,
-      // data: {
-      //   productId: productId,
-      //   quantity: 1,
-      // },
-    })
-      .then((response) => {
-        const { data, status } = response;
-        if (status === 200) {
-          // setProductData(data?.product);
-          setProductArr((prev) => {
-            return [
-              {
-                ...data?.product,
-                quantity: 1,
-              },
-            ];
-          });
-        } else {
-          // Handle error
-        }
+    axios({ method: "get", url: `${SERVER_URL}/api/product/${productId}` })
+      .then(({ data, status }) => {
+        if (status === 200) setProductArr([{ ...data?.product, quantity: 1 }]);
       })
-      .catch((error) => {
-        const { data, status } = error?.response;
-        if (status === 404) {
-          setIsError({ error: data?.message, status: status });
-        }
+      .catch(({ response: { data, status } }) => {
+        if (status === 404) setIsError({ error: data?.message, status });
       })
       .finally(() => setIsDataFetching(false));
   };
 
-  // Getting Cart Item From Cart from database
   const getCartItem = () => {
     setIsDataFetching(true);
     axios({
@@ -90,726 +101,445 @@ const BuyNow = () => {
       headers: { Authorization: `Bearer ${authToken}` },
       data: { userId: userDetail?.id },
     })
-      .then((response) => {
-        setProductArr(response?.data?.cartProduct);
-      })
-      .catch((error) => {
-        console.error(error);
-        // setError(() => {
-        //   return {
-        //     message: "Failed to fetch cart items",
-        //     status: error?.response?.status,
-        //   };
-        // });
-      })
+      .then(({ data }) => setProductArr(data?.cartProduct))
+      .catch(console.error)
       .finally(() => setIsDataFetching(false));
   };
 
   const validateCheckoutDetails = () => {
-    let errors = {}; // Object to store all error messages
-
-    // Validate address fields dynamically from the array
+    let errs = {};
     addressInputField.forEach((field) => {
-      if (field.required && !shippingAddress?.[field.value]) {
-        errors[field.value] = `${field.label} is required.`;
-      }
+      if (field.required && !shippingAddress?.[field.value]) errs[field.value] = `${field.label} is required.`;
     });
-
-    // Validate payment method
     if (!paymentData?.methodName) {
-      errors.methodName = "Please select a payment method.";
+      errs.methodName = "Please select a payment method.";
     } else {
       const { methodName, methodDetail } = paymentData;
-
       if (methodName === "debitcard") {
-        if (!methodDetail?.cardNumber)
-          errors.cardNumber = "Card number is required.";
-        if (!methodDetail?.cardHolderName)
-          errors.cardHolderName = "Cardholder name is required.";
-        if (!methodDetail?.expiryMonth)
-          errors.expiryMonth = "Expiry month is required.";
-        if (!methodDetail?.expiryYear)
-          errors.expiryYear = "Expiry year is required.";
-        if (!methodDetail?.cvv) errors.cvv = "CVV is required.";
+        if (!methodDetail?.cardNumber) errs.cardNumber = "Card number is required.";
+        if (!methodDetail?.cardHolderName) errs.cardHolderName = "Cardholder name is required.";
+        if (!methodDetail?.expiryMonth) errs.expiryMonth = "Expiry month is required.";
+        if (!methodDetail?.expiryYear) errs.expiryYear = "Expiry year is required.";
+        if (!methodDetail?.cvv) errs.cvv = "CVV is required.";
       } else if (methodName === "upi") {
-        if (!methodDetail?.upiId) errors.upiId = "UPI ID is required.";
+        if (!methodDetail?.upiId) errs.upiId = "UPI ID is required.";
       }
     }
-
-    if (Object.keys(errors).length > 0) {
-      setErrors(errors);
-      return false;
-    }
-
+    if (Object.keys(errs).length > 0) { setErrors(errs); return false; }
     return true;
   };
 
-  //order Submissions
   const submitOrder = () => {
-    // Validate and submit payment details
-    // If successful, send order to server
-    // If not, display error message
-    // Navigate to success page
     setIsOrderSubmitting((prev) => !prev);
-
     axios({
       method: "POST",
       url: `${SERVER_URL}/api/order/submit-order`,
       headers: { Authorization: `Bearer ${authToken}` },
-      data: {
-        cartProduct: productArr,
-        shippingAddress: shippingAddress,
-        paymentData,
-        timeStamp: new Date().toLocaleString(),
-      },
+      data: { cartProduct: productArr, shippingAddress, paymentData, timeStamp: new Date().toLocaleString() },
     })
-      .then((response) => {
-        const { data, status } = response;
+      .then(({ data, status }) => {
         if (data?.updatedShippingAddress) {
-          setUserDetail((prev) => {
-            return {
-              ...prev,
-              shippingAddress: data?.updatedShippingAddress,
-            };
-          });
+          setUserDetail((prev) => ({ ...prev, shippingAddress: data?.updatedShippingAddress }));
         }
-
         setIsOrderSubmitting((prev) => !prev);
-
-        if (status === 201) {
-          navigate("/order-success", { state: data?.orderIds });
-        }
+        if (status === 201) navigate("/order-success", { state: data?.orderIds });
       })
-      .catch((error) => {
-        const { data, status } = error?.response;
+      .catch(({ response: { data, status } }) => {
         setIsOrderSubmitting((prev) => !prev);
-        if (status === 404) {
-          swalWithCustomConfiguration?.fire("Oops!", data?.message, "error");
-        }
-        console.error(error);
+        if (status === 404) swalWithCustomConfiguration?.fire("Oops!", data?.message, "error");
+        console.error(data);
       });
   };
-  //handle submit event
+
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!validateCheckoutDetails()) return;
-
     setErrors({});
-
     submitOrder();
-    // // Reset paymentData
-    // setPaymentData({
-    //   methodName: "",
-    //   methodDetail: {},
-    // });
-    // // Reset shippingAddress
-    // setShippingAddress({});
-    // Navigate to success page
   };
-  // Handle Payemnt Method Change
+
   const handlePaymentMethodChange = (e) => {
     if (e.target.name === "paymentMethod") {
-      setPaymentData((prev) => {
-        return {
-          ...prev,
-          methodName: e.target.value,
-          methodDetail: {},
-        };
-      });
-    }
-  };
-  // Handle Payment Detail Change
-  const handlePaymentDetailChange = (e) => {
-    const name = e.target.name;
-    const value = e.target.value;
-    if (name === "cardNumber") {
-      // Validate card number here
-      // if valid, proceed to next field
-      if (value.length <= 16) {
-        setPaymentData((prev) => {
-          return {
-            ...prev,
-            methodDetail: {
-              ...prev.methodDetail,
-              [name]: value,
-            },
-          };
-        });
-      }
-    } else if (name === "cvv") {
-      if (value.length <= 3) {
-        setPaymentData((prev) => {
-          return {
-            ...prev,
-            methodDetail: {
-              ...prev.methodDetail,
-              [name]: value,
-            },
-          };
-        });
-      }
-    } else {
-      setPaymentData((prev) => {
-        return {
-          ...prev,
-          methodDetail: {
-            ...prev.methodDetail,
-            [name]: value,
-          },
-        };
-      });
-    }
-  };
-  // Handle Shipping Address Change
-  const handleShippingAddressChange = (e) => {
-    const name = e.target.name;
-    const value = e.target?.value?.toLowerCase();
-    if (value) {
-      setErrors((prev) => {
-        return {
-          ...prev,
-          [name]: "",
-        };
-      });
-    }
-    if (name === "pinCode") {
-      if (value.length <= 6) {
-        setShippingAddress((prev) => {
-          return {
-            ...prev,
-            [name]:
-              name === "isDefaultShippingAddress" ? e?.target?.checked : value,
-          };
-        });
-      }
-    } else {
-      setShippingAddress((prev) => {
-        return {
-          ...prev,
-          [name]:
-            name === "isDefaultShippingAddress" ? e?.target?.checked : value,
-        };
-      });
+      setPaymentData((prev) => ({ ...prev, methodName: e.target.value, methodDetail: {} }));
     }
   };
 
-  // Fetching Order Product Details
-  useEffect(() => {
-    if (productId) {
-      getProductDataById();
-    } else {
-      getCartItem();
-    }
-  }, [productId]);
-  useEffect(() => {
-    if (!authToken) {
-      navigate("/login");
-    }
-  });
-  useEffect(() => {
-    window.scrollTo(0, 0); // Scroll to the top on component mount
-  }, []);
+  const handlePaymentDetailChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "cardNumber" && value.length > 16) return;
+    if (name === "cvv" && value.length > 3) return;
+    setPaymentData((prev) => ({ ...prev, methodDetail: { ...prev.methodDetail, [name]: value } }));
+  };
+
+  const handleShippingAddressChange = (e) => {
+    const { name, value } = e.target;
+    if (value) setErrors((prev) => ({ ...prev, [name]: "" }));
+    if (name === "pinCode" && value.length > 6) return;
+    setShippingAddress((prev) => ({
+      ...prev,
+      [name]: name === "isDefaultShippingAddress" ? e?.target?.checked : value?.toLowerCase(),
+    }));
+  };
+
+  useEffect(() => { productId ? getProductDataById() : getCartItem(); }, [productId]);
+  useEffect(() => { if (!authToken) navigate("/login"); });
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   if (isDataFetching) return <Loader />;
+
   return (
     productArr?.length > 0 && (
-      <div
-        className={`w-full min-h-screen transition-all duration-300  ${
-          theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900"
-        }`}
-      >
-        {/* <CartCard product={productData} />
-      
-      */}
-        <div className=" w-[80%] m-auto p-2 mobile:w-full tablet:w-[90%] laptop:w-[80%]">
-          <div className="m-5">
-            <span className="text-2xl font-bold font-roboto m-4">Checkout</span>
+      <div className={`min-h-screen w-full transition-all duration-300 ${isDark ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}`}>
+
+        {/* ── Page Header ── */}
+        <div className={`sticky top-0 z-30 border-b px-6 py-3 flex items-center gap-3 ${
+          isDark ? "bg-gray-900/95 border-gray-700 backdrop-blur" : "bg-white/95 border-gray-200 backdrop-blur shadow-sm"
+        }`}>
+          <div className="p-2 bg-indigo-600 rounded-xl">
+            <BsLightningChargeFill className="text-white text-sm" />
           </div>
+          <h1 className={`text-lg font-bold font-roboto ${isDark ? "text-white" : "text-gray-900"}`}>
+            Secure Checkout
+          </h1>
+          <div className="ml-auto flex items-center gap-1.5 text-green-600">
+            <FaLock className="text-xs" />
+            <span className="text-xs font-roboto font-semibold">SSL Secured</span>
+          </div>
+        </div>
 
-          <div className="w-full p-2 h-full flex justify-between gap-8 mobile:flex-col mobile:gap-8 tablet:flex-row">
-            <div className="w-8/12 p-3 rounded border-2 border-gray-100 min-h-[150px] flex flex-col gap-3 h-max mobile:w-full tablet:w-7/12 desktop:8/12">
-              {/* customer detail section */}
-              <div className="border-gray-200 border-b-2 w-full p-3 flex flex-col gap-3">
-                <div className="font-roboto font-semibold text-lg">
-                  Customer Detail
-                </div>
+        <div className="max-w-6xl mx-auto px-4 py-6 flex gap-6 mobile:flex-col mobile:items-stretch tablet:flex-row tablet:items-start">
 
-                <div className="grid grid-cols-2 gap-4 w-full  mobile:text-sm  tablet:text-base">
-                  <div className="flex flex-col gap-2  ">
-                    <label htmlFor="name">
-                      Name <span className="required">*</span>
-                    </label>
-                    <Input
-                      type={"text"}
-                      name={"name"}
-                      id={"name"}
-                      className={`p-2 bg-gray-100 border-2 w-full rounded border-gray-300 outline-none ${
-                        userDetail?.name ? "cursor-not-allowed" : ""
-                      }
-                    ${
-                      theme === "dark"
-                        ? "bg-gray-700 text-white border-gray-600"
-                        : "text-gray-900 bg-gray-100 border-gray-300"
-                    } `}
-                      placeholder={"Name"}
-                      value={userDetail?.name?.toCapitalize()}
-                      disabled={userDetail?.name ? true : false}
-                      onChange={() => {
-                        return;
-                      }}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="phoneNumber">
-                      Phone <span className="required">*</span>
-                    </label>
-                    <Input
-                      type={"number"}
-                      id={"phoneNumber"}
-                      name={"phoneNumber"}
-                      className={`p-2 bg-gray-100 border-2 w-full rounded border-gray-300 outline-none  ${
-                        userDetail?.phoneNumber ? "cursor-not-allowed" : ""
-                      }
-                    ${
-                      theme === "dark"
-                        ? "bg-gray-700 text-white border-gray-600"
-                        : "text-gray-900 bg-gray-100 border-gray-300"
+          {/* ════ LEFT COLUMN — Forms ════ */}
+          <div className="flex-1 min-w-0 flex flex-col gap-5">
+
+            {/* ── Customer Details ── */}
+            <SectionCard
+              icon={<MdShoppingBag className="text-lg" />}
+              title="Customer Details"
+              isDark={isDark}
+            >
+              <div className="grid grid-cols-2 gap-4 mobile:grid-cols-1 small-device:grid-cols-2">
+                <FieldGroup label="Full Name" required>
+                  <Input
+                    type="text" name="name" id="name"
+                    className={inputCls(isDark, userDetail?.name ? "cursor-not-allowed opacity-70" : "")}
+                    placeholder="Your name"
+                    value={userDetail?.name?.toCapitalize?.() || ""}
+                    disabled={!!userDetail?.name}
+                    onChange={() => {}}
+                  />
+                </FieldGroup>
+                <FieldGroup label="Phone Number" required>
+                  <Input
+                    type="number" name="phoneNumber" id="phoneNumber"
+                    className={inputCls(isDark, userDetail?.phoneNumber ? "cursor-not-allowed opacity-70" : "")}
+                    placeholder="Phone number"
+                    value={userDetail?.phoneNumber || ""}
+                    disabled={!!userDetail?.phoneNumber}
+                    onChange={() => {}}
+                  />
+                </FieldGroup>
+              </div>
+            </SectionCard>
+
+            {/* ── Shipping Address ── */}
+            <SectionCard
+              icon={<MdLocationOn className="text-lg" />}
+              title="Shipping Address"
+              isDark={isDark}
+              badge={
+                userDetail?.shippingAddress && Object.keys(userDetail?.shippingAddress).length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setShippingAddress(userDetail?.shippingAddress)}
+                    className={`text-xs font-semibold font-roboto px-3 py-1.5 rounded-lg border transition-all duration-200 ${
+                      isDark
+                        ? "border-indigo-500 text-indigo-400 hover:bg-indigo-900/30"
+                        : "border-indigo-300 text-indigo-600 hover:bg-indigo-50"
                     }`}
-                      placeholder={"Phone Number"}
-                      value={userDetail?.phoneNumber}
-                      disabled={userDetail?.phoneNumber ? true : false}
-                      onChange={() => {
-                        return;
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* shipping address section */}
-              <div className="border-gray-200 border-b-2 w-full p-3 flex flex-col gap-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold font-roboto text-lg">
-                    Shipping Address
-                  </span>
-                  {userDetail?.shippingAddress &&
-                    Object.keys(userDetail?.shippingAddress).length > 0 && (
-                      <Button
-                        btntext={"Use Default Address"}
-                        className={` px-3 py-1 rounded-full text-sm font-medium ${
-                          theme === "dark"
-                            ? "bg-gray-700 text-white border-gray-600"
-                            : "text-gray-900 bg-gray-100 border-gray-300"
-                        }`}
-                        onClick={() =>
-                          setShippingAddress(() => userDetail?.shippingAddress)
-                        }
-                      />
-                    )}
-                </div>
-                <div className="w-full grid  gap-4 mobile:text-sm mobile:grid-cols-2 small-device:grid-cols-3 tablet:text-base tablet:grid-cols-2 laptop:grid-cols-3">
-                  {addressInputField?.map(
-                    (
-                      {
-                        label = null,
-                        type,
-                        placeholder,
-                        value,
-                        id,
-                        name,
-                        required,
-                      },
-                      index
-                    ) => (
-                      <div className="flex flex-col gap-2">
-                        <label htmlFor={id} className="flex gap-2">
-                          {label}
-                          {required && <span className="required">*</span>}
-                        </label>
-                        <Input
-                          type={type}
-                          id={id}
-                          name={name}
-                          className={`p-2 bg-gray-100 w-full border-2 rounded border-gray-300 ${
-                            theme === "dark"
-                              ? "bg-gray-700 text-white border-gray-600"
-                              : "text-gray-900 bg-gray-100 border-gray-300"
-                          }`}
-                          placeholder={placeholder}
-                          onChange={handleShippingAddressChange}
-                          value={shippingAddress?.[value]}
-                        />
-
-                        {errors[name] && (
-                          <p className="text-red-500 text-sm font-medium mt-1">
-                            {errors[value]}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  )}
-
-                  <div className="flex gap-2 w-full font-roboto items-center mobile:col-span-2 small-device:col-span-3 tablet:col-span-2 laptop:col-span-3 ">
+                  >
+                    Use Default Address
+                  </button>
+                ) : null
+              }
+            >
+              <div className="grid grid-cols-2 gap-4 mobile:grid-cols-1 small-device:grid-cols-2 laptop:grid-cols-3">
+                {addressInputField.map(({ label, type, placeholder, value, id, name, required }, index) => (
+                  <FieldGroup key={index} label={label} required={required} error={errors[name]}>
                     <Input
-                      type={"checkbox"}
-                      id={"isDefaultShippingAddress"}
-                      name={"isDefaultShippingAddress"}
+                      type={type} id={id} name={name}
+                      className={inputCls(isDark)}
+                      placeholder={placeholder}
                       onChange={handleShippingAddressChange}
-                      checked={shippingAddress?.isDefaultShippingAddress}
-                      className={` bg-gray-100 border-2 rounded border-gray-300 ${
-                        theme === "dark"
-                          ? "bg-gray-700 text-white border-gray-600"
-                          : "text-gray-900 bg-gray-100 border-gray-300"
-                      }`}
+                      value={shippingAddress?.[value] || ""}
                     />
-                    <label htmlFor="isDefaultShippingAddress">
-                      Make this address as default shipping address
-                    </label>
-                  </div>
-                </div>
+                  </FieldGroup>
+                ))}
               </div>
 
-              {/* Payment method section */}
-
-              <div className=" w-full p-3 flex flex-col gap-3">
-                <div className="font-roboto font-semibold text-lg">
-                  Payment Method
-                </div>
-
-                <div className=" mobile:text-sm tablet:text-base ">
-                  <div className="grid mobile:grid-cols-2 small-device:grid-cols-3 tablet:grid-cols-2 laptop:grid-cols-2 desktop:grid-cols-3  gap-4 w-max  box-border  rounded mobile:w-full mobile:gap-2 tablet:w-full ">
-                    {paymentMethods.map((method) => (
-                      <div
-                        key={method.id}
-                        className={`${
-                          method.classes
-                        } flex justify-center items-center gap-3 border-gray-200 border-2 rounded ${
-                          paymentData.methodName === method.value
-                            ? "bg-indigo-600 text-white border-transparent"
-                            : "bg-none"
-                        }`}
-                      >
-                        <Input
-                          type="radio"
-                          id={method.id}
-                          name="paymentMethod"
-                          value={method.value}
-                          checked={paymentData.methodName === method.value}
-                          onChange={handlePaymentMethodChange}
-                          className="hidden"
-                        />
-                        <label
-                          htmlFor={method.id}
-                          className="w-full h-full p-2 cursor-pointer flex items-center justify-center"
-                        >
-                          {method.label}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-
-                  {errors.methodName && (
-                    <p className="text-red-500 text-sm font-medium mt-1">
-                      {errors.methodName}
-                    </p>
-                  )}
-
-                  <div>
-                    {paymentData?.methodName === "debitcard" && (
-                      <div className="grid  flex-col gap-4 p-3 mobile:grid-cols-2 small-device:grid-cols-3 tablet:grid-cols-2 laptop:grid-cols-3">
-                        {/* <div className="flex  gap-4 w-full"> */}
-                        <div className="flex flex-col gap-2 min-w-[100px] small-device:col-span-2 tablet:col-span-1 laptop:col-span-2">
-                          <label htmlFor="cardNumber">
-                            Card Number <span className="required">*</span>
-                          </label>
-                          <Input
-                            type="text"
-                            id="cardNumber"
-                            name="cardNumber"
-                            placeholder={"Card Number"}
-                            className={`p-2 bg-gray-100 w-full border-2 rounded border-gray-300 ${
-                              theme === "dark"
-                                ? "bg-gray-700 text-white border-gray-600"
-                                : "text-gray-900 bg-gray-100 border-gray-300"
-                            }`}
-                            onChange={handlePaymentDetailChange}
-                            value={paymentData?.methodDetail?.cardNumber}
-                          />
-                          {errors.cardNumber && (
-                            <p className="text-red-500 text-sm font-medium mt-1">
-                              {errors.cardNumber}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col gap-2 ">
-                          <label htmlFor="cardHolderName">
-                            Name <span className="required">*</span>
-                          </label>
-                          <Input
-                            type="text"
-                            id="cardHolderName"
-                            name="cardHolderName"
-                            placeholder={"Card Holder Name"}
-                            className={`p-2 bg-gray-100 w-full border-2 rounded border-gray-300 ${
-                              theme === "dark"
-                                ? "bg-gray-700 text-white border-gray-600"
-                                : "text-gray-900 bg-gray-100 border-gray-300"
-                            }`}
-                            onChange={handlePaymentDetailChange}
-                            value={paymentData?.methodDetail?.cardHolderName}
-                          />
-                          {errors.cardHolderName && (
-                            <p className="text-red-500 text-sm font-medium mt-1">
-                              {errors.cardHolderName}
-                            </p>
-                          )}
-                        </div>
-                        {/* </div> */}
-                        {/* <div className="flex  gap-4 w-full"> */}
-                        <div className="flex flex-col gap-2 ">
-                          <label htmlFor="expirydate">
-                            Expiry Date <span className="required">*</span>
-                          </label>
-                          <div className="flex gap-2 border-2 border-gray-200 rounded p-1 w-full">
-                            <div className="w-1/2">
-                              <select
-                                name="expiryMonth"
-                                id=""
-                                className={`p-1  w-full border-2 rounded border-gray-300 ${
-                                  theme === "dark"
-                                    ? "bg-gray-700 text-white border-gray-600"
-                                    : "text-gray-900 bg-gray-100 border-gray-300"
-                                }`}
-                                onChange={handlePaymentDetailChange}
-                                value={paymentData?.methodDetail?.expirymonth}
-                              >
-                                <option value="">Month</option>
-                                {months.map((month, i) => {
-                                  return (
-                                    <option key={i} value={month?.value}>
-                                      {month?.alphabetics}
-                                    </option>
-                                  );
-                                })}
-                              </select>
-                            </div>
-                            <div className="w-1/2">
-                              <select
-                                name="expiryYear"
-                                id=""
-                                // className=" bg-gray-200 p-1 rounded scroll w-full outline-gray-400 outline-2"
-                                className={`p-1  w-full border-2 rounded border-gray-300 ${
-                                  theme === "dark"
-                                    ? "bg-gray-700 text-white border-gray-600"
-                                    : "text-gray-900 bg-gray-100 border-gray-300"
-                                }`}
-                                onChange={handlePaymentDetailChange}
-                                value={paymentData?.methodDetail?.expiryear}
-                              >
-                                <option value="">Year</option>
-                                {generateFutureYearsForExpiryDate()?.map(
-                                  (year, i) => {
-                                    return (
-                                      <option key={i} value={year}>
-                                        {year}
-                                      </option>
-                                    );
-                                  }
-                                )}
-                              </select>
-                            </div>
-                          </div>
-
-                          {errors.expiryMonth || errors.expiryYear ? (
-                            <p className="text-red-500 text-sm font-medium mt-1">
-                              {errors.expiryMonth || errors.expiryYear}
-                            </p>
-                          ) : (
-                            ""
-                          )}
-                        </div>
-
-                        <div className="flex flex-col gap-2 ">
-                          <label htmlFor="cvv">
-                            CVV <span className="required">*</span>
-                          </label>
-                          <Input
-                            type="password"
-                            id="cvv"
-                            name="cvv"
-                            placeholder={"CVV"}
-                            className={`p-2 bg-gray-100 w-full border-2 rounded border-gray-300 ${
-                              theme === "dark"
-                                ? "bg-gray-700 text-white border-gray-600"
-                                : "text-gray-900 bg-gray-100 border-gray-300"
-                            }`}
-                            onChange={handlePaymentDetailChange}
-                            value={paymentData?.methodDetail?.cvv}
-                          />
-                          {errors.cvv && (
-                            <p className="text-red-500 text-sm font-medium mt-1">
-                              {errors.cvv}
-                            </p>
-                          )}
-                        </div>
-                        {/* </div> */}
-                      </div>
-                    )}
-
-                    {paymentData?.methodName === "upi" && (
-                      <div className="flex gap-4 p-3 ">
-                        <div className="flex flex-col gap-2">
-                          <label htmlFor="upi">
-                            UPI ID <span className="required">*</span>
-                          </label>
-                          <Input
-                            type="text"
-                            id="upi"
-                            name="upiId"
-                            placeholder={"UPI ID"}
-                            className={`p-2 bg-gray-100 w-full border-2 rounded border-gray-300 ${
-                              theme === "dark"
-                                ? "bg-gray-700 text-white border-gray-600"
-                                : "text-gray-900 bg-gray-100 border-gray-300"
-                            }`}
-                            onChange={handlePaymentDetailChange}
-                            value={paymentData?.methodDetail?.upiId}
-                          />
-
-                          {errors.upiId && (
-                            <p className="text-red-500 text-sm font-medium mt-1">
-                              {errors.upiId}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* order summary section */}
-            <div className="w-4/12 p-2 rounded border-2 border-gray-100 min-h-[150px] h-max mobile:w-full  tablet:w-5/12 laptop:w-5/12 desktop:w-4/12 ">
-              <div className="m-2">
-                <span className="  font-roboto font-semibold text-2xl">
-                  Your Order
+              {/* Save as default checkbox */}
+              <label className="flex items-center gap-2.5 cursor-pointer w-max">
+                <input
+                  type="checkbox"
+                  id="isDefaultShippingAddress"
+                  name="isDefaultShippingAddress"
+                  onChange={handleShippingAddressChange}
+                  checked={shippingAddress?.isDefaultShippingAddress || false}
+                  className="w-4 h-4 accent-indigo-600 cursor-pointer"
+                />
+                <span className={`text-sm font-roboto ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                  Save as default shipping address
                 </span>
-              </div>
+              </label>
+            </SectionCard>
 
-              <div className="flex flex-col gap-3 max-h-[250px] overflow-scroll ">
-                {productArr?.map((product, index) => {
+            {/* ── Payment Method ── */}
+            <SectionCard
+              icon={<MdPayment className="text-lg" />}
+              title="Payment Method"
+              isDark={isDark}
+            >
+              {/* Method selector pills — stacked on mobile, row on tablet+ */}
+              <div className="flex flex-col gap-2 small-device:flex-row small-device:gap-3">
+                {paymentMethods.map((method) => {
+                  const isSelected = paymentData.methodName === method.value;
                   return (
-                    <div key={index} className="flex gap-4 p-2 w-full">
-                      {/* <div className="flex gap-2 p-2"> */}
-                      <img
-                        src={product?.image?.[0]}
-                        alt={product?.name}
-                        className="w-20 h-20 object-cover object-top rounded scale-105"
+                    <label
+                      key={method.id}
+                      htmlFor={method.id}
+                      className={`
+                        flex-1 cursor-pointer flex items-center gap-2.5
+                        px-4 py-3 rounded-xl border-2 text-sm font-semibold font-roboto
+                        transition-all duration-200 whitespace-nowrap
+                        ${isSelected
+                          ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200"
+                          : isDark
+                            ? "border-gray-600 text-gray-300 hover:border-indigo-500 hover:bg-indigo-900/20"
+                            : "border-gray-200 text-gray-600 hover:border-indigo-300 hover:bg-indigo-50"
+                        }
+                      `}
+                    >
+                      <input
+                        type="radio" id={method.id} name="paymentMethod" value={method.value}
+                        checked={isSelected} onChange={handlePaymentMethodChange}
+                        className="hidden"
                       />
-                      <div className="w-2/3 flex flex-col gap-2">
-                        <span className="font-semibold font-roboto w-full text-ellipsis overflow-hidden whitespace-nowrap">
-                          {product?.name}
-                        </span>
-                        <div>
-                          Qty: {product?.quantity}
-                          <span className="text-gray-400">
-                            {" "}
-                            x{" "}
-                            {formatNumber(product?.price || product?.mrpPrice)}
-                          </span>
-                        </div>
-                        <span className="flex w-full items-center ">
-                          Subtotal:{" "}
-                          {formatNumber(
-                            (product?.price || product?.mrpPrice) *
-                              product?.quantity
-                          )}
-                        </span>
-                      </div>
-                      {/* </div> */}
-                    </div>
+                      {method.value === "debitcard" && <MdCreditCard className={`flex-shrink-0 text-lg ${isSelected ? "text-white" : "text-indigo-500"}`} />}
+                      {method.value === "upi" && <span className={`flex-shrink-0 text-xs font-black ${isSelected ? "text-white" : "text-indigo-500"}`}>UPI</span>}
+                      {method.value === "cod" && <FaTruck className={`flex-shrink-0 ${isSelected ? "text-white" : "text-indigo-500"}`} />}
+                      {method.label}
+                    </label>
                   );
                 })}
               </div>
 
-              <div className="m-2">
-                <div className="m-2">
-                  {/* Total Price */}
-                  <div className="flex gap-4 p-2 w-full total-price">
-                    <span className="text-lg font-roboto w-full">Total</span>
-                    <span className="flex items-center">
-                      <span className="text-lg font-semibold font-roboto">
-                        {formatNumber(
-                          productArr?.reduce((total, product) => {
-                            return (
-                              total +
-                              (product?.price || product?.mrpPrice) *
-                                product?.quantity
-                            );
-                          }, 0)
-                        )}
-                      </span>
-                    </span>
-                  </div>
+              {errors.methodName && <p className="text-red-500 text-xs font-roboto">{errors.methodName}</p>}
 
-                  {/* Discount Price */}
-                  <div className="flex gap-4 p-2 w-full total-price">
-                    <span className="text-lg font-roboto w-full">Discount</span>
-                    <span className="flex items-center">
-                      <span className="text-lg font-semibold font-roboto">
-                        {formatNumber(
-                          productArr?.reduce((total, product) => {
-                            return (
-                              total +
-                              (product?.mrpPrice - product?.sellingPrice) *
-                                product?.quantity
-                            );
-                          }, 0)
-                        ) || 0}
-                      </span>
-                    </span>
-                  </div>
-                  {totalPrice < 1000 && (
-                    <div className="flex gap-4 p-2 w-full total-price">
-                      <span className="text-lg font-roboto w-full">
-                        Shipping Charges
-                      </span>
-                      <span className="flex items-center">
-                        <span className="text-lg font-semibold font-roboto">
-                          {formatNumber(shippingCharges)}
-                        </span>
-                      </span>
+              {/* Card Details */}
+              {paymentData?.methodName === "debitcard" && (
+                <div className={`rounded-xl p-4 border ${isDark ? "bg-gray-700/50 border-gray-600" : "bg-indigo-50/50 border-indigo-100"}`}>
+                  <p className={`text-xs font-semibold font-roboto mb-3 uppercase tracking-widest ${isDark ? "text-gray-400" : "text-indigo-400"}`}>Card Details</p>
+                  <div className="grid grid-cols-1 gap-3 small-device:grid-cols-2">
+                    {/* Card Number — full width on mobile, spans 2 on small-device+ */}
+                    <div className="col-span-1 small-device:col-span-2">
+                      <FieldGroup label="Card Number" required error={errors.cardNumber}>
+                        <Input
+                          type="text" id="cardNumber" name="cardNumber"
+                          placeholder="1234 5678 9012 3456"
+                          className={inputCls(isDark)}
+                          onChange={handlePaymentDetailChange}
+                          value={paymentData?.methodDetail?.cardNumber || ""}
+                        />
+                      </FieldGroup>
                     </div>
-                  )}
-
-                  {/* Grand Total */}
-                  <div className="flex gap-4 p-2 w-full total-price">
-                    <span className="text-lg font-roboto w-full">
-                      Grand Total
-                    </span>
-                    <span className="flex items-center">
-                      <span className="text-lg font-semibold font-roboto">
-                        {formatNumber(totalPrice + shippingCharges)}
-                      </span>
-                    </span>
+                    {/* Cardholder Name — full width on mobile, half on small-device+ */}
+                    <div className="col-span-1 small-device:col-span-2">
+                      <FieldGroup label="Cardholder Name" required error={errors.cardHolderName}>
+                        <Input
+                          type="text" id="cardHolderName" name="cardHolderName"
+                          placeholder="Name on card"
+                          className={inputCls(isDark)}
+                          onChange={handlePaymentDetailChange}
+                          value={paymentData?.methodDetail?.cardHolderName || ""}
+                        />
+                      </FieldGroup>
+                    </div>
+                    <FieldGroup label="Expiry Date" required error={errors.expiryMonth || errors.expiryYear}>
+                      <div className="flex gap-2">
+                        <select
+                          name="expiryMonth"
+                          className={inputCls(isDark)}
+                          onChange={handlePaymentDetailChange}
+                          value={paymentData?.methodDetail?.expiryMonth || ""}
+                        >
+                          <option value="">Month</option>
+                          {months.map((m, i) => <option key={i} value={m.value}>{m.alphabetics}</option>)}
+                        </select>
+                        <select
+                          name="expiryYear"
+                          className={inputCls(isDark)}
+                          onChange={handlePaymentDetailChange}
+                          value={paymentData?.methodDetail?.expiryYear || ""}
+                        >
+                          <option value="">Year</option>
+                          {generateFutureYearsForExpiryDate().map((y, i) => <option key={i} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </FieldGroup>
+                    <FieldGroup label="CVV" required error={errors.cvv}>
+                      <Input
+                        type="password" id="cvv" name="cvv"
+                        placeholder="•••"
+                        className={inputCls(isDark)}
+                        onChange={handlePaymentDetailChange}
+                        value={paymentData?.methodDetail?.cvv || ""}
+                      />
+                    </FieldGroup>
                   </div>
                 </div>
+              )}
 
-                <div className="w-full p-2">
-                  <Button
-                    btntext={"Place Order"}
-                    className={
-                      "w-full bg-indigo-600 rounded p-2 text-white font-roboto font-semibold outline-none border-none"
-                    }
-                    onClick={handleSubmit}
-                    loading={isorderSubmitting}
+              {/* UPI Details */}
+              {paymentData?.methodName === "upi" && (
+                <FieldGroup label="UPI ID" required error={errors.upiId}>
+                  <Input
+                    type="text" id="upi" name="upiId"
+                    placeholder="yourname@upi"
+                    className={inputCls(isDark, "max-w-sm")}
+                    onChange={handlePaymentDetailChange}
+                    value={paymentData?.methodDetail?.upiId || ""}
                   />
+                </FieldGroup>
+              )}
+
+              {/* COD note */}
+              {paymentData?.methodName === "cod" && (
+                <div className={`flex items-center gap-2 p-3 rounded-xl text-sm font-roboto ${
+                  isDark ? "bg-yellow-900/30 text-yellow-300 border border-yellow-800" : "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                }`}>
+                  <FaTruck />
+                  Pay in cash when your order is delivered. No advance needed.
                 </div>
+              )}
+            </SectionCard>
+          </div>
+
+          {/* ════ RIGHT COLUMN — Order Summary ════ */}
+          <div className="w-full tablet:w-[280px] laptop:w-[360px] flex-shrink-0 flex flex-col gap-4 tablet:sticky tablet:top-20">
+
+            {/* Products list */}
+            <div className={`rounded-2xl border p-5 ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200 shadow-sm"}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <MdShoppingBag className="text-indigo-500" />
+                <h2 className={`font-bold font-roboto text-base ${isDark ? "text-white" : "text-gray-900"}`}>
+                  Your Order ({productArr.length} item{productArr.length !== 1 ? "s" : ""})
+                </h2>
+              </div>
+              <div className={`border-t mb-4 ${isDark ? "border-gray-700" : "border-gray-100"}`} />
+
+              <div className="fancy-scroll flex flex-col gap-3 max-h-[260px] overflow-y-auto pr-2">
+                {productArr?.map((product, index) => (
+                  <div key={index} className="flex gap-3">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                      <img
+                        src={product?.image?.[0]}
+                        alt={product?.name}
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                      <p className={`font-semibold font-roboto text-sm line-clamp-2 leading-snug ${isDark ? "text-white" : "text-gray-900"}`}>
+                        {product?.name}
+                      </p>
+                      <p className={`text-xs font-roboto ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        Qty: {product?.quantity} × {formatNumber(product?.sellingPrice || product?.price)}
+                      </p>
+                      <p className={`text-sm font-bold font-roboto ${isDark ? "text-indigo-300" : "text-indigo-600"}`}>
+                        {formatNumber((product?.sellingPrice || product?.price) * product?.quantity)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+
+            {/* Price Breakdown */}
+            <div className={`rounded-2xl border p-5 flex flex-col gap-3 ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200 shadow-sm"}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <FaTag className="text-indigo-500 text-sm" />
+                <h2 className={`font-bold font-roboto text-base ${isDark ? "text-white" : "text-gray-900"}`}>Price Details</h2>
+              </div>
+              <div className={`border-t ${isDark ? "border-gray-700" : "border-gray-100"}`} />
+
+              {[
+                { label: "MRP Total", value: formatNumber(totalMRP), muted: true },
+                { label: "Discount", value: totalDiscount > 0 ? `- ${formatNumber(totalDiscount)}` : "₹0", green: totalDiscount > 0 },
+                { label: "Shipping", value: shippingCharges > 0 ? formatNumber(shippingCharges) : "FREE", green: shippingCharges === 0 },
+              ].map(({ label, value, muted, green }) => (
+                <div key={label} className="flex justify-between items-center">
+                  <span className={`text-sm font-roboto ${isDark ? "text-gray-400" : "text-gray-500"}`}>{label}</span>
+                  <span className={`text-sm font-semibold font-roboto ${
+                    green ? "text-green-500" : muted ? isDark ? "text-gray-300" : "text-gray-600" : isDark ? "text-white" : "text-gray-900"
+                  }`}>{value}</span>
+                </div>
+              ))}
+
+              <div className={`border-t pt-3 mt-1 ${isDark ? "border-gray-700" : "border-gray-100"}`} />
+              <div className="flex justify-between items-center">
+                <span className={`font-bold font-roboto text-base ${isDark ? "text-white" : "text-gray-900"}`}>Grand Total</span>
+                <span className="font-bold font-roboto text-lg text-indigo-600">{formatNumber(grandTotal)}</span>
+              </div>
+
+              {totalDiscount > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-green-50 border border-green-200 rounded-xl">
+                  <MdCheckCircle className="text-green-500 text-sm flex-shrink-0" />
+                  <p className="text-green-700 text-xs font-semibold font-roboto">
+                    You save {formatNumber(totalDiscount)} on this order!
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Place Order CTA */}
+            <button
+              onClick={handleSubmit}
+              disabled={isorderSubmitting}
+              className={`
+                w-full py-3.5 rounded-2xl font-roboto font-bold text-base text-white
+                flex items-center justify-center gap-2
+                transition-all duration-200 shadow-lg
+                ${isorderSubmitting
+                  ? "bg-indigo-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-indigo-300 hover:scale-[1.02] active:scale-100"
+                }
+              `}
+            >
+              {isorderSubmitting ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Placing Order...
+                </>
+              ) : (
+                <>
+                  <BsLightningChargeFill />
+                  Place Order · {formatNumber(grandTotal)}
+                </>
+              )}
+            </button>
+
+            {/* Trust strip */}
+            <div className={`flex items-center justify-center gap-3 py-2 text-xs font-roboto ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+              <span className="flex items-center gap-1"><FaLock /> Secure</span>
+              <span>·</span>
+              <span className="flex items-center gap-1"><FaTruck /> Fast Delivery</span>
+              <span>·</span>
+              <span className="flex items-center gap-1"><MdCheckCircle /> Easy Returns</span>
+            </div>
           </div>
+
         </div>
       </div>
     )
