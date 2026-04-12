@@ -12,7 +12,6 @@ const AddRemoveProductFromWishListButton = ({
   userDetail,
   isAddedToWislist = false, // initial state from product data
 }) => {
-  debugger
   const { theme } = useTheme();
   // Initialize from the prop so the heart is filled on first render
   // if the product is already in the user's wishlist
