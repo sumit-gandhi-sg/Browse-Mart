@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Product from "../../model/productSchema.js";
+import Category from "../../model/categorySchema.js";
 import Order from "../../model/orderSchema.js";
 
 const getRelatedProduct = async (req, res) => {
@@ -12,7 +13,7 @@ const getRelatedProduct = async (req, res) => {
       category: category,
       _id: { $ne: productId },
       isHide: false,
-    }).limit(5);
+    }).populate("category subCategory").limit(5);
 
     const modifiedProducts = product
       // ?.filter((product) => !product?.isHide)
@@ -30,7 +31,7 @@ const getRelatedProduct = async (req, res) => {
           description: product?.description,
           image: product?.image?.[0],
           category: product?.category,
-          stock: product?.stock > 0,
+          stock: product?.stock,
           rating: Number(totalStarRating / product?.review?.length),
         };
       });

@@ -7,10 +7,10 @@ import { FiUpload } from "react-icons/fi";
 import { useDropzone } from "react-dropzone";
 import ImagePreview from "./ImagePreview";
 import {
-  productCategory,
   productBrands,
   swalWithCustomConfiguration,
 } from "../../../utility/constant";
+import { useCategory } from "../../../Context/categoryContext";
 import Select from "../../../LIBS/Select";
 import { useTheme } from "../../../Context/themeContext";
 // import cloudinary from "../../cloudinary.config";
@@ -20,6 +20,17 @@ const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const ProductUpload = ({ authToken }) => {
   const [productUploading, setProductUploading] = useState(false);
   const { theme } = useTheme();
+  const { categories } = useCategory();
+
+  const dynamicCategories = categories?.filter(c => c.parentCategory === null).map(mainCat => {
+     return {
+        id: mainCat._id,
+        name: "category",
+        value: mainCat._id, // Use ID for value
+        displayName: mainCat.name, // Use name for UI
+        child: categories.filter(c => c.parentCategory === mainCat._id || c.parentCategory?._id === mainCat._id).map(c => ({ id: c._id, name: c.name }))
+     };
+  }) || [];
   const [initialProductDetail] = useState({
     name: "",
     price: "",
@@ -265,7 +276,7 @@ const ProductUpload = ({ authToken }) => {
               className="p-2 bg-gray-100 border-2 rounded border-gray-300"
               onChange={handleChange}
               value={productDetails?.category}
-              itemArray={productCategory}
+              itemArray={dynamicCategories}
               displayName={"Select Category"}
             />
             {/* <select
@@ -321,17 +332,11 @@ const ProductUpload = ({ authToken }) => {
               value={productDetails?.subCategory}
             >
               <option value="">Select Sub Category</option>
-              {productCategory?.map((item) => {
-                return item.value === productDetails?.category
-                  ? item.child?.map((subItem) => {
-                      return (
-                        <option key={subItem?.id} value={subItem?.value}>
-                          {subItem.toCapitalize()}
-                        </option>
-                      );
-                    })
-                  : "";
-              })}
+              {dynamicCategories?.find(item => item.value === productDetails?.category)?.child?.map((subItem) => (
+                <option key={subItem.id} value={subItem.id}>
+                  {subItem.name.toCapitalize()}
+                </option>
+              ))}
             </select>
           </div>
           {/* // )} */}

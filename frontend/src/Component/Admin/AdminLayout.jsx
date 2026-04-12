@@ -29,6 +29,12 @@ const AdminLayout = () => {
       icon: "",
       navigate: "products",
     },
+    {
+      id: 4,
+      name: "Categories",
+      icon: "",
+      navigate: "categories",
+    },
   ];
 
   useEffect(() => {

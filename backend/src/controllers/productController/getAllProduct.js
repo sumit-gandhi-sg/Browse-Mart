@@ -1,5 +1,7 @@
 import Product from "../../model/productSchema.js";
 import User from "../../model/userSchema.js";
+import Category from "../../model/categorySchema.js";
+import mongoose from "mongoose";
 const getAllProduct = async (req, res) => {
   try {
     const {
@@ -30,23 +32,36 @@ const getAllProduct = async (req, res) => {
         },
       ];
     } else if (searchCategory) {
-      query.$or = [
-        {
-          category: { $regex: searchCategory?.toString(), $options: "i" },
-        },
-        {
-          subCategory: {
-            $regex: searchCategory?.toString(),
-            $options: "i",
-          },
-        },
-      ];
+      if (mongoose.Types.ObjectId.isValid(searchCategory)) {
+        query.$or = [
+          { category: searchCategory },
+          { subCategory: searchCategory },
+        ];
+      } else {
+        // Find categories matching the name to get their IDs
+        const matchedCategories = await Category.find({
+          name: { $regex: searchCategory?.toString(), $options: "i" },
+        }).select("_id");
+        
+        const categoryIds = matchedCategories.map(c => c._id);
+        
+        if (categoryIds.length > 0) {
+          query.$or = [
+            { category: { $in: categoryIds } },
+            { subCategory: { $in: categoryIds } },
+          ];
+        } else {
+          // If no category found by name, ensure no products are returned if that was the only filter
+          query.category = new mongoose.Types.ObjectId(); 
+        }
+      }
     }
 
     const totalCount = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalCount / parsedLimit) || 1;
 
     const products = await Product.find(query)
+      .populate("category subCategory")
       .sort({ _id: -1 })
       .skip(skip)
       .limit(parsedLimit);
@@ -66,7 +81,7 @@ const getAllProduct = async (req, res) => {
         description: product?.description,
         image: product?.image?.[0],
         category: product?.category,
-        stock: product?.stock > 0,
+        stock: product?.stock,
         rating: product?.review?.length
           ? Number(totalStarRating / product?.review?.length)
           : 0,

@@ -1,9 +1,10 @@
 import Product from "../../model/productSchema.js";
+import Category from "../../model/categorySchema.js";
 const getProductById = async (req, res) => {
   try {
     const id = req?.params?.id;
     if (!id) return res.status(400).json({ message: "Product ID is required" });
-    const product = await Product.findById(id);
+    const product = await Product.findById(id).populate("category subCategory");
     if (product?.isHide)
       return res.status(404).json({
         sucess: false,

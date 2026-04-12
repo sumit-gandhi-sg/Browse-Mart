@@ -1,4 +1,5 @@
 import Product from "../../model/productSchema.js";
+import Category from "../../model/categorySchema.js";
 import SellerUser from "../../model/sellerUserSchema.js";
 
 const getProducts = async (req, res) => {
@@ -17,6 +18,7 @@ const getProducts = async (req, res) => {
 
     const totalProducts = await Product.countDocuments(query);
     const products = await Product.find(query)
+      .populate("category subCategory")
       .populate({
         path: "sellerId",
         model: SellerUser,

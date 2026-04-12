@@ -56,7 +56,7 @@ const ProductsContainer = () => {
     let filter = [];
     filteredCategory.forEach((category) => {
       const products = allProduct?.filter((item) =>
-        item.category.includes(category),
+        item.category?.name?.includes(category),
       );
       filter = [...filter, ...products];
     });
@@ -109,7 +109,7 @@ const ProductsContainer = () => {
     }
     // e.target.checked
     //   ? SetFilteredProduct(
-    //       allProduct?.filter((item) => item.category.includes(e.target.value))
+    //       allProduct?.filter((item) => item.category?.name?.includes(e.target.value))
     //     )
   };
 

@@ -42,7 +42,7 @@ const Select = ({
                 : "even:bg-gray-50 border-b-2"
             }`}
           >
-            {item.value.toCapitalize()}
+            {item.displayName ? item.displayName.toCapitalize() : item.name ? item.name.toCapitalize() : item.value.toCapitalize()}
           </option>
         );
       })}

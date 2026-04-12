@@ -6,6 +6,8 @@ import AdminDashboard from "../Component/Admin/Dashboard/AdminDashboard";
 import UserManagement from "../Component/Admin/UserManagement/UserManagement";
 import AdminProductList from "../Component/Admin/ProductManagement/AdminProductList";
 
+import CategoryManagement from "../Component/Admin/CategoryManagement/CategoryManagement";
+
 const AdminOnly = ({ children }) => {
   const { userDetail } = useUser();
   
@@ -38,6 +40,10 @@ const AdminRoutes = {
     {
       path: "products",
       element: <AdminProductList />,
+    },
+    {
+        path: "categories",
+        element: <CategoryManagement />,
     },
   ],
 };

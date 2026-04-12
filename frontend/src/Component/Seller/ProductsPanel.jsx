@@ -6,7 +6,8 @@ import { BiLoaderAlt } from "react-icons/bi";
 import { FaTrash, FaSearch, FaBoxOpen, FaChevronLeft, FaChevronRight, FaPen } from "react-icons/fa";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
-import { formatNumber, productCategory, swalWithCustomConfiguration } from "../../utility/constant";
+import { formatNumber, swalWithCustomConfiguration } from "../../utility/constant";
+import { useCategory } from "../../Context/categoryContext";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
@@ -22,6 +23,12 @@ export const ProductsPanel = () => {
   const [filters, setFilters] = useState({});
   const { theme } = useTheme();
   const { authToken } = useAuth();
+  const { categories } = useCategory();
+
+  const dynamicCategories = categories?.filter(c => c.parentCategory === null).map(mainCat => {
+     return { id: mainCat._id, value: mainCat._id, displayName: mainCat.name };
+  }) || [];
+
   let tempSearchQuery = "";
   const visiblePages = Array.from({ length: totalPages }, (_, index) => index + 1)
     .filter((page) => page >= Math.max(1, currentPage - 1))
@@ -156,7 +163,7 @@ export const ProductsPanel = () => {
 
           <Select
             name="category"
-            itemArray={productCategory}
+            itemArray={dynamicCategories}
             className={`w-full tablet:w-[200px] px-4 py-3 rounded-xl border-2 font-medium cursor-pointer focus:ring-4 outline-none transition-all flex-shrink-0 ${
               theme === "dark"
                 ? "bg-gray-900 text-white border-gray-700 focus:border-indigo-500 focus:ring-indigo-500/20"
@@ -231,7 +238,7 @@ export const ProductsPanel = () => {
                         </td>
                         <td className="p-4">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
-                            {product?.category?.toCapitalize()}
+                            {product?.category?.name?.toCapitalize()}
                           </span>
                         </td>
                         <td className={`p-4 font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>

@@ -2,14 +2,24 @@ import React, { useState, useEffect } from "react";
 import { Button, SectionTitle } from "../../LIBS";
 import { useTheme } from "../../Context/themeContext";
 import { Link, useNavigate } from "react-router-dom";
-import { productCategory } from "../../utility/constant";
 import ProductCard from "../Product/ProductCard";
 import { useAuth } from "../../Context/authContext";
+import { useCategory } from "../../Context/categoryContext";
 
 const HomePage = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { categories } = useCategory();
+
+  // Create UI representation of distinct main categories
+  const dynamicCategories = categories?.filter(c => c.parentCategory === null).map(mainCat => {
+     return {
+        id: mainCat._id,
+        value: mainCat.name,
+     };
+  }) || [];
+
   const themeClass =
     theme === "dark" ? " bg-gray-900 text-white" : "bg-white text-gray-900";
 
@@ -114,7 +124,7 @@ const HomePage = () => {
           Shop By Category
         </h2>
         <div className="flex justify-center w-full flex-wrap gap-4 ">
-          {productCategory?.map((category) => (
+          {dynamicCategories?.map((category) => (
             <Button
               key={category.id}
               btntext={category.value}

@@ -1,4 +1,6 @@
 import Product from "../../model/productSchema.js";
+import Category from "../../model/categorySchema.js";
+import mongoose from "mongoose";
 
 const getAllProductUsingSellerId = async (req, res) => {
   try {
@@ -15,11 +17,23 @@ const getAllProductUsingSellerId = async (req, res) => {
       query.stock = 0;
     }
     if (category) {
-      query.category = category;
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        query.category = category;
+      } else {
+        const matchedCategory = await Category.findOne({
+          name: { $regex: category?.toString(), $options: "i" },
+        }).select("_id");
+        if (matchedCategory) {
+          query.category = matchedCategory._id;
+        } else {
+          query.category = new mongoose.Types.ObjectId();
+        }
+      }
     }
     const totalCount = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalCount / Number(limit));
     const allProduct = await Product?.find(query)
+      .populate("category subCategory")
       .sort({ _id: -1 })
       .skip(skip)
       .limit(limit)

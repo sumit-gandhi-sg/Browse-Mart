@@ -141,7 +141,7 @@ const ProductPage = () => {
         `${SERVER_URL}/api/product/get-related-product`,
         {
           params: {
-            category: productData?.category,
+            category: productData?.category?._id || productData?.category,
             productId,
           },
         }
@@ -270,13 +270,13 @@ const ProductPage = () => {
           <div className="product-description w-1/2 mobile:w-full tablet:w-1/2 flex flex-col gap-4 py-4 pr-2">
 
             {/* Category Badge */}
-            {productData?.category && (
+            {productData?.category?.name && (
               <span className={`
                 inline-flex w-max items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full font-roboto
                 ${isDark ? "bg-indigo-900/50 text-indigo-300 border border-indigo-700" : "bg-indigo-50 text-indigo-600 border border-indigo-200"}
               `}>
                 <BsBoxSeam className="text-xs" />
-                {productData?.category?.toUpperCase()}
+                {productData?.category?.name?.toUpperCase()}
               </span>
             )}
 

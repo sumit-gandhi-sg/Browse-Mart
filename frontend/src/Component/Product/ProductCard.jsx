@@ -99,7 +99,7 @@ const ProductCard = ({ product }) => {
           `}>
             <span className={`text-[10px] font-semibold font-roboto uppercase tracking-widest
               ${isDark ? "text-indigo-400" : "text-indigo-500"}`}>
-              {category}
+              {category?.name}
             </span>
           </div>
         )}

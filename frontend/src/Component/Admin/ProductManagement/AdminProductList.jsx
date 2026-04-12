@@ -88,7 +88,7 @@ const AdminProductList = () => {
                   </td>
                   <td className="p-4">
                     <div className={`font-bold max-w-xs truncate ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`} title={t.name}>{t.name}</div>
-                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-widest">{t.category}</div>
+                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-widest">{t.category?.name}</div>
                   </td>
                   <td className="p-4">
                     <div className={`font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t.sellerId?.businessName || "Unknown Business"}</div>

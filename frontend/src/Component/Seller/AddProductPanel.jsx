@@ -12,9 +12,9 @@ import {
   checkValidation,
   initialProductDetails,
   productBrands,
-  productCategory,
   swalWithCustomConfiguration,
 } from "../../utility/constant";
+import { useCategory } from "../../Context/categoryContext";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
@@ -27,6 +27,18 @@ export const AddProductPanel = () => {
   const [isFetchingInitialData, setIsFetchingInitialData] = useState(false);
   const { theme } = useTheme();
   const { authToken } = useAuth();
+  const { categories } = useCategory();
+  
+  const dynamicCategories = categories?.filter(c => c.parentCategory === null).map(mainCat => {
+     return {
+        id: mainCat._id,
+        name: "category",
+        value: mainCat._id, // Use ID for value
+        displayName: mainCat.name, // Use name for UI
+        child: categories.filter(c => c.parentCategory === mainCat._id || c.parentCategory?._id === mainCat._id).map(c => ({ id: c._id, name: c.name }))
+     };
+  }) || [];
+
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -48,10 +60,10 @@ export const AddProductPanel = () => {
           mrpPrice: productData.mrpPrice?.toString() || "",
           sellingPrice: productData.sellingPrice?.toString() || "",
           description: productData.description || "",
-          category: productData.category || "",
+          category: productData.category?._id || productData.category || "",
           stock: productData.stock?.toString() || "",
           brand: productData.brand || "",
-          subCategory: productData.subCategory || "",
+          subCategory: productData.subCategory?._id || productData.subCategory || "",
         });
         setImages(productData.image || []);
       }
@@ -416,7 +428,7 @@ export const AddProductPanel = () => {
               }`}
               onChange={handleChange}
               value={productForm?.category}
-              itemArray={productCategory}
+              itemArray={dynamicCategories}
               displayName="Select Category"
             />
             {error.category && <p className="text-red-500 text-xs font-bold">{error.category}</p>}
@@ -440,17 +452,11 @@ export const AddProductPanel = () => {
               value={productForm?.subCategory}
             >
               <option value="">Select Sub Category</option>
-              {productCategory?.map((item) => {
-                return item.value === productForm?.category
-                  ? item.child?.map((subItem) => {
-                      return (
-                        <option key={subItem?.id || subItem} value={subItem}>
-                          {subItem.toCapitalize()}
-                        </option>
-                      );
-                    })
-                  : "";
-              })}
+              {dynamicCategories?.find(item => item.value === productForm?.category)?.child?.map((subItem) => (
+                <option key={subItem.id} value={subItem.id}>
+                  {subItem.name.toCapitalize()}
+                </option>
+              ))}
             </select>
             {error.subCategory && <p className="text-red-500 text-xs font-bold">{error.subCategory}</p>}
           </div>
