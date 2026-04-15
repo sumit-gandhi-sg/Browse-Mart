@@ -1,17 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  FaUser,
-  FaBox,
-  FaHeart,
-  FaMapMarkerAlt,
-  FaCog,
-  FaEdit,
-  FaTrash,
-} from "react-icons/fa";
+import { FaBox, FaHeart, FaUser } from "react-icons/fa";
+import { NavLink, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
-import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../../Context/userContext";
 import { OrdersContainer, WishListContainer } from "./index";
 import Button from "../../LIBS/Button";
@@ -22,7 +14,7 @@ import defaultProileImage from "../../assets/images/maleprofileicon.jpg";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
 const tabs = [
-  { icon: FaUser, tab: "profile", label: "Profile Overview" },
+  { icon: FaUser, tab: "overview", label: "Profile Overview" },
   { icon: FaBox, tab: "orders", label: "Orders" },
   { icon: FaHeart, tab: "wishlist", label: "Wishlist" },
 ];
@@ -33,19 +25,14 @@ const Profile1 = () => {
   const { userDetail } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState("profile");
   const redirect = `/login?redirect=${encodeURIComponent(location?.pathname)}`;
   const userName = userDetail?.name?.toCapitalize?.() || "My Account";
-  const nameParts = userDetail?.name?.split(" ") || [];
-  const firstName = nameParts?.[0] || "N/A";
-  const lastName = nameParts?.slice(1)?.join(" ") || "N/A";
-  const address = userDetail?.address || "No address added yet";
 
   useEffect(() => {
     if (!authToken) {
       navigate(redirect);
     }
-  }, [authToken]);
+  }, [authToken, navigate, redirect]);
 
   return (
     <div
@@ -76,21 +63,22 @@ const Profile1 = () => {
 
         <nav className="mt-6 space-y-3">
           {tabs.map(({ icon: Icon, tab, label }) => (
-            <button
+            <NavLink
               key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold transition-all duration-300 ${
-                activeTab === tab
-                  ? "bg-indigo-600 text-white"
-                  : theme === "dark"
-                  ? "text-gray-300 hover:bg-gray-800"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
+              to={`/profile/${tab}`}
+              className={({ isActive }) =>
+                `flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold transition-all duration-300 ${
+                  isActive
+                    ? "bg-indigo-600 text-white"
+                    : theme === "dark"
+                    ? "text-gray-300 hover:bg-gray-800"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`
+              }
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="h-4 w-4" />
               <span>{label}</span>
-            </button>
+            </NavLink>
           ))}
         </nav>
       </aside>
@@ -102,41 +90,35 @@ const Profile1 = () => {
           }`}
         >
           {tabs.map(({ icon: Icon, tab, label }) => (
-            <button
+            <NavLink
               key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${
-                activeTab === tab
-                  ? "bg-indigo-600 text-white"
-                  : theme === "dark"
-                  ? "bg-gray-800 text-gray-300"
-                  : "bg-gray-200 text-gray-700"
-              }`}
+              to={`/profile/${tab}`}
+              className={({ isActive }) =>
+                `flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${
+                  isActive
+                    ? "bg-indigo-600 text-white"
+                    : theme === "dark"
+                    ? "bg-gray-800 text-gray-300"
+                    : "bg-gray-200 text-gray-700"
+                }`
+              }
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="h-4 w-4" />
               <span>{label}</span>
-            </button>
+            </NavLink>
           ))}
         </div>
 
-        {activeTab === "profile" && (
-          <ProfileOverview
-            theme={theme}
-            userDetail={userDetail}
-            authToken={authToken}
-          />
-        )}
-        {activeTab === "orders" && <OrdersContainer />}
-        {activeTab === "wishlist" && (
-          <WishListContainer authToken={authToken} />
-        )}
+        <Outlet />
       </main>
     </div>
   );
 };
 
-const ProfileOverview = ({ theme, userDetail, authToken }) => {
+export const ProfileOverviewPage = () => {
+  const { theme } = useTheme();
+  const { authToken } = useAuth();
+  const { userDetail, setUserDetail } = useUser();
   const [profileForm, setProfileForm] = useState({
     name: "",
     email: "",
@@ -155,7 +137,6 @@ const ProfileOverview = ({ theme, userDetail, authToken }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isShippingEditing, setIsShippingEditing] = useState(false);
   const [isShippingUpdating, setIsShippingUpdating] = useState(false);
-  const { setUserDetail } = useUser();
 
   useEffect(() => {
     setProfileForm({
@@ -329,7 +310,7 @@ const ProfileOverview = ({ theme, userDetail, authToken }) => {
 
       <SectionTitle title="Personal Information" />
       <div
-        className={`rounded-lg p-4 shadow-md grid grid-cols-1 small-device:grid-cols-2 gap-4 ${
+        className={`grid grid-cols-1 gap-4 rounded-lg p-4 shadow-md small-device:grid-cols-2 ${
           theme === "dark" ? "bg-gray-800" : "bg-white"
         }`}
       >
@@ -364,7 +345,7 @@ const ProfileOverview = ({ theme, userDetail, authToken }) => {
       </div>
 
       <SectionTitle title="Saved Addresses" />
-      <div className="grid grid-cols-1 small-device:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 small-device:grid-cols-2">
         <AddressCard
           title="Home"
           address={profileForm?.address || ""}
@@ -512,8 +493,17 @@ const ProfileOverview = ({ theme, userDetail, authToken }) => {
   );
 };
 
+export const ProfileOrdersPage = () => <OrdersContainer />;
+
+export const ProfileWishlistPage = () => {
+  const { authToken } = useAuth();
+  return <WishListContainer authToken={authToken} />;
+};
+
+export const ProfileIndexRedirect = () => <Navigate to="overview" replace />;
+
 const SectionTitle = ({ title }) => (
-  <h2 className="mt-6 mb-2 text-lg font-semibold">{title}</h2>
+  <h2 className="mb-2 mt-6 text-lg font-semibold">{title}</h2>
 );
 
 const InputField = ({ label, value, theme, editable = false, name, onChange }) => (
@@ -538,34 +528,13 @@ const InputField = ({ label, value, theme, editable = false, name, onChange }) =
         type="text"
         value={value}
         readOnly
-        className={`mt-1 p-2 w-full border rounded-md ${
+        className={`mt-1 w-full rounded-md border p-2 ${
           theme === "dark"
             ? "border-gray-700 bg-gray-900 text-white"
             : "bg-gray-100 text-gray-900"
         }`}
       />
     )}
-  </div>
-);
-
-const OrderItem = ({ id, date, status, total, theme }) => (
-  <div
-    className={`flex justify-between items-center p-2 border-b ${
-      theme === "dark" ? "border-gray-700" : ""
-    }`}
-  >
-    <span>{id}</span>
-    <span>{date}</span>
-    <span
-      className={`px-2 py-1 text-xs font-medium rounded ${
-        status === "Delivered"
-          ? "bg-green-100 text-green-600"
-          : "bg-yellow-100 text-yellow-600"
-      }`}
-    >
-      {status}
-    </span>
-    <span className="font-semibold">{total}</span>
   </div>
 );
 
@@ -578,7 +547,7 @@ const AddressCard = ({
   onChange,
 }) => (
   <div
-    className={`p-4 rounded-lg shadow-md relative ${
+    className={`relative rounded-lg p-4 shadow-md ${
       theme === "dark" ? "bg-gray-800" : "bg-white"
     }`}
   >
@@ -590,21 +559,17 @@ const AddressCard = ({
         value={address}
         onChange={onChange}
         placeholder="Enter address"
-        className="mt-3 w-full pr-16"
+        className="mt-3 w-full"
       />
     ) : (
       <p
-        className={`text-sm mt-1 ${
+        className={`mt-1 text-sm ${
           theme === "dark" ? "text-gray-300" : "text-gray-600"
         }`}
       >
         {address || "No address added yet"}
       </p>
     )}
-    <div className="absolute top-2 right-2 flex space-x-2 text-gray-500">
-      <FaEdit className="cursor-pointer hover:text-blue-500" />
-      <FaTrash className="cursor-pointer hover:text-red-500" />
-    </div>
   </div>
 );
 

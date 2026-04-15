@@ -1,47 +1,99 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
-import { GrFormPrevious, GrFormNext } from "react-icons/gr";
+import axios from "axios";
+import { GrFormNext, GrFormPrevious } from "react-icons/gr";
+import {
+  FiArrowRight,
+  FiBriefcase,
+  FiCheckCircle,
+  FiCreditCard,
+  FiFileText,
+  FiShield,
+} from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import {
   sellerRegistrationInputFields,
   initialSellerDetails,
   swalWithCustomConfiguration,
 } from "../../utility/constant";
 import { Button, Input } from "../../LIBS";
-import axios from "axios";
 import { useTheme } from "../../Context/themeContext";
 import { useAuth } from "../../Context/authContext";
-import { useUser } from "../../Context/userContext";
+
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+
+const tabs = [
+  {
+    id: "businessInformation",
+    value: "Business Information",
+    helper: "Store identity, contact, and address details",
+    icon: <FiBriefcase />,
+  },
+  {
+    id: "legalInformation",
+    value: "Legal Information",
+    helper: "Business compliance and registration records",
+    icon: <FiFileText />,
+  },
+  {
+    id: "financialInformation",
+    value: "Financial Information",
+    helper: "Settlement account and payout information",
+    icon: <FiCreditCard />,
+  },
+];
+
 const SellerRegistrationPage = () => {
   const [sellerDetail, setSellerDetail] = useState(initialSellerDetails);
   const { theme } = useTheme();
-  const { userDetail } = useUser();
   const { authToken } = useAuth();
   const [isDataSending, setIsDataSending] = useState(false);
-  const [isSubmit, setIsSubmit] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState({});
   const [activeTab, setActiveTab] = useState(0);
-  const tab = [
-    { id: "businessInformation", value: "Business Information" },
-    { id: "legalInformation", value: "Legal Information" },
-    { id: "financialInformation", value: "Financial Information" },
-  ];
-
   const navigate = useNavigate();
+  const isDark = theme === "dark";
 
-  const handleChange = (e) => {
+  const currentTab = tabs[activeTab];
+  const currentTabFields = sellerRegistrationInputFields?.filter(
+    (field) => field?.tab === currentTab?.id
+  );
+  const completedTabs = tabs.filter((tab) => validateTabFields(tab.id, true)).length;
+
+  function handleChange(e) {
     const { name, value } = e.target;
-    setSellerDetail({ ...sellerDetail, [name]: value });
+    setSellerDetail((prev) => ({ ...prev, [name]: value }));
     setError((prev) => ({ ...prev, [name]: null }));
-  };
+  }
 
-  const handleSubmit = async (e) => {
+  function validateTabFields(currentTabId, silent = false) {
+    const matchingFields = sellerRegistrationInputFields.filter(
+      (field) => field?.tab === currentTabId
+    );
+
+    const nextErrors = {};
+    let valid = true;
+
+    matchingFields.forEach((field) => {
+      const fieldError = field?.validationRule(sellerDetail[field?.name]);
+      if (fieldError) {
+        nextErrors[field?.name] = fieldError;
+        valid = false;
+      }
+    });
+
+    if (!silent) {
+      setError((prev) => ({ ...prev, ...nextErrors }));
+    }
+
+    return valid;
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
-    // setIsSubmit(true);
-    const allValid = tab.every((tab) => validateTabFields(tab?.id));
+    const allValid = tabs.every((tab) => validateTabFields(tab?.id));
     if (!allValid) {
       return;
     }
+
     try {
       setIsDataSending(true);
       const response = await axios(`${SERVER_URL}/api/seller/register`, {
@@ -52,170 +104,288 @@ const SellerRegistrationPage = () => {
         },
         data: sellerDetail,
       });
-      const { data, status } = response;
-      if (status === 201) {
+
+      if (response?.status === 201) {
         swalWithCustomConfiguration?.fire({
           title: "Seller Registration Successful!",
           text: "You have successfully registered as a seller.",
           icon: "success",
         });
-        // navigate("/seller/dashboard");
         navigate("/");
       }
-    } catch (error) {
-      const { status, data } = error?.response;
+    } catch (requestError) {
+      const { status, data } = requestError?.response || {};
       if (status === 400) {
         swalWithCustomConfiguration?.fire({
           title: "Seller Registration Failed!",
           text: data?.message,
           icon: "error",
         });
+      } else {
+        swalWithCustomConfiguration?.fire({
+          title: "Something went wrong",
+          text: "Please try again in a moment.",
+          icon: "error",
+        });
       }
     } finally {
       setIsDataSending(false);
-      //   navigate("/seller/dashboard");
     }
-  };
+  }
 
-  const validateTabFields = (currentTab) => {
-    const currentTabFields = sellerRegistrationInputFields.filter(
-      (field) => field?.tab === currentTab
-    );
-    let valid = true;
-    currentTabFields.forEach((field) => {
-      const error = field?.validationRule(sellerDetail[field?.name]);
-      if (error) {
-        setError((prev) => ({
-          ...prev,
-          [field?.name]: error,
-        }));
-        valid = false;
-      }
-    });
-    return valid;
-  };
-
-  const handleTabChange = (index) => {
-    if (validateTabFields(tab[activeTab]?.id)) {
+  function handleTabChange(index) {
+    if (index <= activeTab || validateTabFields(tabs[activeTab]?.id)) {
       setActiveTab(index);
     }
-  };
+  }
 
   useEffect(() => {
     if (!authToken) {
       navigate("/login");
     }
+
     return () => {
       setSellerDetail(initialSellerDetails);
     };
   }, [authToken, navigate]);
+
   useEffect(() => {
-    window.scrollTo(0, 0); // Scroll to the top on component mount
+    window.scrollTo(0, 0);
   }, []);
+
   return (
     <div
-      className={` flex-1 flex justify-center  items-center transition-all duration-300 h-full ${
-        theme === "dark"
-          ? " bg-gray-900 text-white"
-          : "bg-gray-200 text-gray-900"
+      className={`min-h-screen transition-all duration-300 ${
+        isDark ? "bg-gray-900 text-white" : "bg-slate-50 text-gray-900"
       }`}
     >
-      <div
-        className={`rounded-lg m-8 w-full max-w-4xl mobile:m-0 mobile:mt-10 mobile:rounded-none small-device:m-8 small-device:rounded-lg mt-4 relative  ${
-          theme === "dark" ? " bg-gray-800" : "bg-white"
-        } transition-all duration-300`}
-      >
-        <h1 className="font-roboto text-center  text-gray-400 text-3xl m-3 p-4 font-semibold">
-          Seller Registration
-        </h1>
-        <form action="" method="post">
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-3 mobile:grid-cols-2 tablet:grid-cols-3">
-              {tab.map((item, index) => (
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 tablet:px-6 laptop:px-8">
+          <section
+            className={`overflow-hidden rounded-[30px] border px-6 py-8 shadow-sm transition-all duration-300 mobile:px-4 ${
+              isDark
+                ? "border-gray-800 bg-gradient-to-br from-gray-900 via-indigo-950 to-gray-900"
+                : "border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-sky-50"
+            }`}
+          >
+            <div className="grid gap-6 laptop:grid-cols-[minmax(0,1.4fr)_360px] laptop:items-end">
+              <div>
                 <span
-                  key={item.id}
-                  //   onClick={(e) => {
-                  //     console.log(index);
-                  //     e.preventDefault();
-                  //     handleTabChange(index);
-                  //   }}
-                  className={`p-2 flex items-center border-y-2 font-roboto  border-r-2 last:border-r-0   mobile:last:col-span-2  mobile:last:border-t-0 mobile:last:flex mobile:last:justify-center  tablet:last:col-span-1 tablet:last:border-t-2  tablet:last:flex tablet:last:justify-start ${
-                    activeTab === index
-                      ? "text-bluetext-center bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent  text-lg font-medium  border-b-indigo-600 border-b-4"
-                      : " "
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] ${
+                    isDark
+                      ? "bg-white/10 text-indigo-200"
+                      : "bg-white text-indigo-600 shadow-sm"
                   }`}
                 >
-                  {item.value}
+                  <FiShield />
+                  Seller onboarding
                 </span>
-              ))}
+                <h1 className="mt-4 font-roboto text-4xl font-bold mobile:text-3xl">
+                  Launch your seller profile with a cleaner, guided flow.
+                </h1>
+                <p
+                  className={`mt-3 max-w-2xl text-sm leading-6 ${
+                    isDark ? "text-gray-300" : "text-gray-600"
+                  }`}
+                >
+                  Complete your business, legal, and payout information in a single
+                  polished application designed to feel consistent with the rest of
+                  the storefront.
+                </p>
+              </div>
+
+              <div
+                className={`rounded-[26px] border p-5 ${
+                  isDark ? "border-white/10 bg-white/5" : "border-white bg-white/85"
+                }`}
+              >
+                <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  Progress
+                </p>
+                <div className="mt-3 flex items-end justify-between">
+                  <div>
+                    <p className="text-3xl font-bold">{completedTabs}/3</p>
+                    <p className={`mt-1 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      Sections ready for review
+                    </p>
+                  </div>
+                  <FiArrowRight className={isDark ? "text-indigo-300" : "text-indigo-500"} />
+                </div>
+                <div className={`mt-4 h-2 overflow-hidden rounded-full ${isDark ? "bg-white/10" : "bg-indigo-100"}`}>
+                  <div
+                    className="h-full rounded-full bg-indigo-500 transition-all duration-300"
+                    style={{ width: `${(completedTabs / tabs.length) * 100}%` }}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="w-full grid  grid-1 p-4  gap-4 gap-y-7 mobile:text-sm mobile:grid-cols-2 small-device:grid-cols-2  tablet:text-base tablet:grid-cols-2 laptop:grid-cols-3">
-              {sellerRegistrationInputFields
-                ?.filter((field) => field?.tab === tab[activeTab]?.id)
-                ?.map((field, index) => {
+          </section>
+
+          <div className="grid gap-6 laptop:grid-cols-[300px_minmax(0,1fr)]">
+            <aside
+              className={`rounded-[28px] border p-4 shadow-sm ${
+                isDark ? "border-gray-800 bg-gray-950/70" : "border-gray-200 bg-white"
+              }`}
+            >
+              <div className="mb-4">
+                <h2 className="font-roboto text-xl font-bold">Application Steps</h2>
+                <p className={`mt-1 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  Move section by section and submit once everything looks right.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {tabs.map((item, index) => {
+                  const isActive = activeTab === index;
+                  const isComplete = validateTabFields(item.id, true);
+
                   return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => handleTabChange(index)}
+                      className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition-all duration-300 ${
+                        isActive
+                          ? isDark
+                            ? "border-indigo-500 bg-indigo-500/10"
+                            : "border-indigo-300 bg-indigo-50"
+                          : isDark
+                            ? "border-gray-800 bg-gray-900 hover:border-gray-700"
+                            : "border-gray-200 bg-gray-50 hover:border-gray-300"
+                      }`}
+                    >
+                      <div
+                        className={`mt-1 rounded-xl p-2 ${
+                          isActive
+                            ? "bg-indigo-500 text-white"
+                            : isDark
+                              ? "bg-gray-800 text-gray-300"
+                              : "bg-white text-gray-600"
+                        }`}
+                      >
+                        {isComplete ? <FiCheckCircle /> : item.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-roboto text-sm font-semibold">{item.value}</p>
+                        <p
+                          className={`mt-1 text-xs leading-5 ${
+                            isDark ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          {item.helper}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </aside>
+
+            <section
+              className={`rounded-[28px] border shadow-sm ${
+                isDark ? "border-gray-800 bg-gray-950/70" : "border-gray-200 bg-white"
+              }`}
+            >
+              <div
+                className={`border-b px-6 py-5 mobile:px-4 ${
+                  isDark ? "border-gray-800" : "border-gray-200"
+                }`}
+              >
+                <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                  Step {activeTab + 1}
+                </p>
+                <h2 className="mt-2 font-roboto text-2xl font-bold mobile:text-xl">
+                  {currentTab?.value}
+                </h2>
+                <p className={`mt-2 text-sm leading-6 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  {currentTab?.helper}
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                <div className="grid gap-5 p-6 mobile:grid-cols-1 mobile:px-4 small-device:grid-cols-2 laptop:grid-cols-3">
+                  {currentTabFields?.map((field) => (
                     <div
-                      className="flex flex-col gap-2 relative"
+                      className={`rounded-2xl border p-4 transition-all duration-300 ${
+                        error?.[field?.name]
+                          ? "border-red-300 bg-red-50/70 dark:border-red-800"
+                          : isDark
+                            ? "border-gray-800 bg-gray-900"
+                            : "border-gray-200 bg-gray-50"
+                      }`}
                       key={field?.id}
                     >
-                      <label htmlFor={field?.name}>
-                        {field.label?.toCapitalize()}
-                        {field?.required ? (
-                          <span className="required"> *</span>
-                        ) : (
-                          ""
-                        )}
+                      <label
+                        htmlFor={field?.name}
+                        className="mb-2 block font-roboto text-sm font-semibold"
+                      >
+                        {field?.label}
+                        {field?.required ? <span className="text-red-500"> *</span> : null}
                       </label>
                       <Input
                         type={field?.type}
                         id={field?.name}
                         name={field?.name}
-                        placeholder={field?.placeholder?.toCapitalize()}
-                        className={`p-2   rounded border-2  ${
-                          theme === "dark"
-                            ? "bg-gray-700 text-white border-gray-600 focus:border-gray-300"
-                            : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
+                        placeholder={field?.placeholder}
+                        className={`w-full rounded-xl border px-4 py-3 ${
+                          error?.[field?.name]
+                            ? "border-red-400 focus:border-red-500"
+                            : isDark
+                              ? "border-gray-700 bg-gray-950"
+                              : "border-gray-200 bg-white"
                         }`}
                         value={sellerDetail?.[field?.name]}
                         onChange={handleChange}
                         maxLength={field?.maxLength || null}
                       />
-                      <p className="text-red-600 ">{error?.[field?.name]}</p>
+                      <p className="mt-2 min-h-5 text-sm text-red-500">
+                        {error?.[field?.name] || ""}
+                      </p>
                     </div>
-                  );
-                })}
-            </div>
+                  ))}
+                </div>
+
+                <div
+                  className={`flex items-center justify-between border-t px-6 py-5 mobile:px-4 ${
+                    isDark ? "border-gray-800" : "border-gray-200"
+                  }`}
+                >
+                  <Button
+                    btntext="Previous"
+                    disabled={activeTab === 0}
+                    className={`rounded-2xl px-5 py-3 ${
+                      activeTab === 0
+                        ? "cursor-not-allowed bg-gray-300 text-gray-500"
+                        : isDark
+                          ? "bg-gray-800 text-white hover:bg-gray-700"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    icon={<GrFormPrevious className="text-xl" />}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveTab((prev) => (prev > 0 ? prev - 1 : prev));
+                    }}
+                  />
+
+                  <Button
+                    btntext={activeTab !== tabs.length - 1 ? "Next Section" : "Submit Application"}
+                    loading={isDataSending}
+                    icon={<GrFormNext className="text-xl" />}
+                    iconPosition="right"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (activeTab < tabs.length - 1) {
+                        handleTabChange(activeTab + 1);
+                      } else {
+                        handleSubmit(e);
+                      }
+                    }}
+                    className="rounded-2xl bg-indigo-600 px-5 py-3 text-white hover:bg-indigo-700"
+                  />
+                </div>
+              </form>
+            </section>
           </div>
-          <div className="w-full p-3 flex  items-center justify-between ">
-            <Button
-              btntext={"Previous"}
-              disabled={activeTab === 0}
-              className="font-bold text-blue-500  py-2 px-3 rounded hover:cursor-pointer"
-              icon={<GrFormPrevious className="text-xl font-bold" />}
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveTab((prev) => (prev > 0 ? prev - 1 : prev));
-              }}
-            />
-            <Button
-              btntext={`${activeTab !== tab?.length - 1 ? "Next" : "Submit"}`}
-              loading={isDataSending}
-              icon={<GrFormNext className="text-xl hover:cursor-pointer   " />}
-              onClick={(e) => {
-                e.preventDefault();
-                setIsSubmit(true);
-                if (activeTab < tab.length - 1) {
-                  handleTabChange(activeTab + 1);
-                } else {
-                  handleSubmit(e); // Submit when at last tab
-                }
-              }}
-              className="   text-white px-3 py-2 rounded-md bg-gradient-to-r from-blue-500 to-purple-500"
-              iconPosition="right"
-            />
-          </div>
-        </form>
-      </div>
+        </div>
     </div>
   );
 };

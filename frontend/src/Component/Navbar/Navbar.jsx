@@ -1,192 +1,222 @@
-import { useState, useContext } from "react";
-import Hamburger from "../../LIBS/Hamburger";
-import { Link } from "react-router-dom";
-import ProfileSlider from "../Profile/ProfileSlider";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  FaChevronDown,
+  FaMoon,
+  FaShoppingCart,
+  FaSignOutAlt,
+  FaSun,
+  FaUser,
+} from "react-icons/fa";
+import { Button, SearchBar } from "../../LIBS";
 import { useTheme } from "../../Context/themeContext";
 import { useCart } from "../../Context/cartContext";
-import { FaSun, FaMoon, FaShoppingCart, FaUser } from "react-icons/fa";
-import { Button, SearchBar } from "../../LIBS";
 import { useAuth } from "../../Context/authContext";
 import { useUser } from "../../Context/userContext";
+import { swalWithCustomConfiguration } from "../../utility/constant";
 
-// import maleProfileIcon2 from "../../assets/images/maleprofileicon2.jpg";
 const Navbar = () => {
-  const [showProfileSlider, setShowProfileSlider] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  const { authToken } = useAuth();
+  const { authToken, setAuthToken } = useAuth();
   const { cartCount } = useCart();
   const { userDetail, setUserDetail } = useUser();
-  const themeClass =
-    theme === "dark" ? "bg-gray-800 text-white" : "bg-gray-200 text-gray-900";
+  const navigate = useNavigate();
+  const profileMenuRef = useRef(null);
+  const isDark = theme === "dark";
+  const themeClass = isDark
+    ? "bg-gray-800 text-white"
+    : "bg-gray-200 text-gray-900";
+
+  const handleLogOut = () => {
+    swalWithCustomConfiguration
+      .fire({
+        title: "Are you Leaving?",
+        text: "Are you sure want to logout?",
+        icon: "warning",
+        showDenyButton: true,
+        confirmButtonText: "Logout",
+        denyButtonText: "Cancel",
+        reverseButtons: true,
+      })
+      .then((response) => {
+        if (response.isConfirmed) {
+          localStorage.removeItem("AuthToken");
+          setAuthToken(null);
+          setUserDetail(null);
+          setShowProfileMenu(false);
+          navigate("/");
+        }
+      });
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <>
-      <nav
-        className={` ${themeClass} sticky top-0 z-50 flex justify-between  items-center p-4 shadow-md transition-all duration-300 `}
-      >
-        <Link to={"/"}>
-          <h1 className="text-2xl  mobile:text-2xl tablet:text-3xl laptop:text-4xl font-bold text-center bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-            Browse Mart
-          </h1>
-        </Link>
-        <div className="flex  items-center gap-4">
-          <SearchBar />
-          <Button
-            onClick={toggleTheme}
-            className={`p-1 rounded-full  bg-opacity-75 transition-all duration-300 ${
-              theme === "dark" ? "hover:bg-gray-400" : "hover:bg-gray-300"
-            }`}
-            icon={
-              theme === "dark" ? (
-                <FaSun className="text-white w-4 h-4 transition-all duration-300" />
-              ) : (
-                <FaMoon className="text-gray-800 w-4 h-4 transition-all duration-300" />
-              )
-            }
-          />
-          {authToken ? (
-            <>
-              <Link to={"/cart"}>
-                <span className="relative">
-                  <FaShoppingCart
-                    className={`text-lg cursor-pointer  ${
-                      theme === "dark"
-                        ? "hover:text-indigo-400"
-                        : "hover:text-indigo-600"
-                    }`}
-                    aria-label="Cart"
-                  />
-                  <span className="absolute bg-white rounded-full flex justify-center items-center font-semibold  h-4 w-4 -top-2 -right-2 text-black text-[12px]   ">
-                    {cartCount}
-                  </span>
+    <nav
+      className={`${themeClass} sticky top-0 z-50 flex items-center justify-between p-4 shadow-md transition-all duration-300`}
+    >
+      <Link to="/">
+        <h1 className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-center text-2xl font-bold text-transparent mobile:text-2xl tablet:text-3xl laptop:text-4xl">
+          Browse Mart
+        </h1>
+      </Link>
+
+      <div className="flex items-center gap-4">
+        <SearchBar />
+        <Button
+          onClick={toggleTheme}
+          className={`rounded-full p-1 transition-all duration-300 ${
+            isDark ? "hover:bg-gray-400" : "hover:bg-gray-300"
+          }`}
+          icon={
+            isDark ? (
+              <FaSun className="h-4 w-4 text-white transition-all duration-300" />
+            ) : (
+              <FaMoon className="h-4 w-4 text-gray-800 transition-all duration-300" />
+            )
+          }
+        />
+
+        {authToken ? (
+          <>
+            <Link to="/cart">
+              <span className="relative">
+                <FaShoppingCart
+                  className={`cursor-pointer text-lg ${
+                    isDark ? "hover:text-indigo-400" : "hover:text-indigo-600"
+                  }`}
+                  aria-label="Cart"
+                />
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[12px] font-semibold text-black">
+                  {cartCount}
                 </span>
-              </Link>
-              {/* <Link to={""}> */}
-              <FaUser
-                className={`text-lg cursor-pointer  ${
-                  theme === "dark"
-                    ? "hover:text-indigo-400"
-                    : "hover:text-indigo-600"
-                }`}
-                aria-label="User Profile"
-                onClick={() => setShowProfileSlider((prev) => !prev)}
-              />
-              {/* </Link> */}
-            </>
-          ) : (
-            <Link to={"/login"}>
-              <Button
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-lg hover:bg-indigo-700 "
-                aria-label="Login"
-                btntext="Login"
-              />
+              </span>
             </Link>
-          )}
-        </div>
-        {/* profileSlider */}
-        {authToken !== null && authToken !== undefined && authToken !== "" && (
-          <ProfileSlider
-            showProfileSlider={showProfileSlider}
-            setShowProfileSlider={setShowProfileSlider}
-            userDetail={userDetail}
-            setUserDetail={setUserDetail}
-          />
-        )}
-      </nav>
 
-      {/* <div
-        className={`nav-bar flex justify-between items-center w-full h-16 p-3   ${
-          theme === "dark"
-            ? "bg-gray-800 text-white"
-            : "bg-gray-200 text-gray-800"
-        } transition-all duration-300 sticky top-0 z-50 shadow-md  shadow-black/20`}
-      >
-        <Link to={"/"}>
-          <h1 className="text-xs mobile:text-2xl tablet:text-3xl laptop:text-4xl font-bold text-center bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-            Browse Mart
-          </h1>
-        </Link>
-        <div
-          className={`links flex w-min gap-4 justify-end items-center text-white font-semibold text-lg `}
-        >
-           Show profile / Login Section 
-          {authToken ? (
-            <div className="flex gap-3 items-center">
-              <Link to={"/cart"}>
-                <div className="flex gap-2 items-center cursor-pointer relative">
-                  <BsCart2
-                    className={`${
-                      theme === "dark" ? "text-white" : "text-black"
-                    } text-3xl font-bold`}
-                  />
-                  <p
-                    className={`bg-indigo-600 text-white w-6 h-6 p-1  font-roboto rounded-full flex justify-center items-center absolute -top-3 left-3 ${
-                      cartCount === 0 ? "hidden" : ""
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowProfileMenu((prev) => !prev)}
+                className={`flex items-center gap-2 rounded-full px-3 py-2 transition-all duration-300 ${
+                  isDark
+                    ? "bg-gray-900 text-white hover:bg-gray-700"
+                    : "bg-white text-gray-800 hover:bg-gray-100"
+                }`}
+                aria-label="User Profile Menu"
+              >
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                    isDark ? "bg-indigo-500/20 text-indigo-300" : "bg-indigo-100 text-indigo-600"
+                  }`}
+                >
+                  <FaUser className="text-sm" />
+                </span>
+                <span className="hidden max-w-28 truncate text-sm font-semibold small-device:block">
+                  {userDetail?.name?.toCapitalize?.().split(" ")?.[0] || "Profile"}
+                </span>
+                <FaChevronDown
+                  className={`text-xs transition-transform duration-300 ${
+                    showProfileMenu ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {showProfileMenu ? (
+                <div
+                  className={`absolute right-0 mt-3 w-72 overflow-hidden rounded-2xl border shadow-xl ${
+                    isDark
+                      ? "border-gray-800 bg-gray-900 text-white"
+                      : "border-gray-200 bg-white text-gray-900"
+                  }`}
+                >
+                  <div
+                    className={`border-b px-4 py-4 ${
+                      isDark ? "border-gray-800 bg-gray-950" : "border-gray-100 bg-gray-50"
                     }`}
                   >
-                    {cartCount}
-                  </p>
-                  <span
-                    className={`${
-                      theme === "dark" ? "text-white" : "text-black"
-                    } `}
-                  >
-                    Cart
-                  </span>
+                    <p className="font-roboto text-base font-bold">
+                      {userDetail?.name?.toCapitalize?.() || "Browse Mart User"}
+                    </p>
+                    <p className={`mt-1 break-words text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      {userDetail?.email || "Signed in account"}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col p-2">
+                    <Link
+                      to="/profile/overview"
+                      className={`rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300 ${
+                        isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"
+                      }`}
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      My Profile
+                    </Link>
+                    <Link
+                      to="/profile/orders"
+                      className={`rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300 ${
+                        isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"
+                      }`}
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      My Orders
+                    </Link>
+                    <Link
+                      to="/profile/wishlist"
+                      className={`rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300 ${
+                        isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"
+                      }`}
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      Wishlist
+                    </Link>
+                  </div>
+
+                  <div className={`border-t p-2 ${isDark ? "border-gray-800" : "border-gray-100"}`}>
+                    <button
+                      type="button"
+                      onClick={handleLogOut}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold transition-all duration-300 ${
+                        isDark
+                          ? "text-red-300 hover:bg-red-500/10"
+                          : "text-red-600 hover:bg-red-50"
+                      }`}
+                    >
+                      <FaSignOutAlt />
+                      Logout
+                    </button>
+                  </div>
                 </div>
-              </Link>
-              <div
-                className="flex gap-2 items-center cursor-pointer"
-                onClick={() => setShowProfileSlider((prev) => !prev)}
-              >
-                <div className="w-12 h-12 rounded-full overflow-hidden">
-                  <img
-                    src={maleProfileIcon}
-                    className="w-full"
-                    alt="profile icon"
-                  />
-                </div>
-                <div
-                  className={`${
-                    theme === "dark" ? "text-white" : "text-black"
-                  }  w-max mobile:hidden small-device:block`}
-                >
-                  {userDetail?.name?.toCapitalize().split(" ")[0] || "Profile"}
-                </div>
-              </div>
+              ) : null}
             </div>
-          ) : (
-            <Link to={"/login"}>
-              <button
-                //  onClick={() => setIsLoggedIn(true)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-lg hover:bg-indigo-700 "
-                aria-label="Login"
-              >
-                Login
-              </button>
-            </Link>
-          )}
-        </div>
-
-        * profileSlider *
-        {authToken !== null && authToken !== undefined && authToken !== "" && (
-          <ProfileSlider
-            showProfileSlider={showProfileSlider}
-            setShowProfileSlider={setShowProfileSlider}
-            userDetail={userDetail}
-            setUserDetail={setUserDetail}
-            authToken={authToken}
-            setAuthToken={setAuthToken}
-          />
+          </>
+        ) : (
+          <Link to="/login">
+            <Button
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-white shadow-lg hover:bg-indigo-700"
+              aria-label="Login"
+              btntext="Login"
+            />
+          </Link>
         )}
-
-        <Hamburger isShow={isShow} SetIsShow={SetIsShow} /> 
-      </div> */}
-    </>
+      </div>
+    </nav>
   );
 };
 
 export default Navbar;
-
-// mobile:${
-//   isShow ? "flex-col" : "hidden"
-// } mobile:absolute mobile:top-16 mobile:left-0 mobile:w-full mobile:text-left mobile:p-2 mobile:bg-blue-4000 mobile: tablet:flex tablet:top-0 tablet:relative tablet:w-1/3

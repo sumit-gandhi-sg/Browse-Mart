@@ -10,7 +10,12 @@ import {
   ForgetPasswordPage,
   Login,
 } from "../Pages";
-import Profile1 from "../Profile/profile1";
+import Profile1, {
+  ProfileIndexRedirect,
+  ProfileOrdersPage,
+  ProfileOverviewPage,
+  ProfileWishlistPage,
+} from "../Profile/profile1";
 import { useAuth } from "../../Context/authContext";
 import { useUser } from "../../Context/userContext";
 import { ConsumerRoutes, SellerRoutes } from "../../routes";
@@ -61,6 +66,28 @@ const router = createBrowserRouter([
       {
         path: "/profile",
         element: <Profile1 />,
+        children: [
+          {
+            index: true,
+            element: <ProfileIndexRedirect />,
+          },
+          {
+            path: "overview",
+            element: <ProfileOverviewPage />,
+          },
+          {
+            path: "orders",
+            element: <ProfileOrdersPage />,
+          },
+          {
+            path: "wishlist",
+            element: <ProfileWishlistPage />,
+          },
+          {
+            path: "*",
+            element: <Navigate to="/profile/overview" replace />,
+          },
+        ],
       },
       {
         path: "*",
