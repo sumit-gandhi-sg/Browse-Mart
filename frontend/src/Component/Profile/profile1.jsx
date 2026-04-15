@@ -8,6 +8,7 @@ import { useUser } from "../../Context/userContext";
 import { OrdersContainer, WishListContainer } from "./index";
 import Button from "../../LIBS/Button";
 import Input from "../../LIBS/Input";
+import { Loader } from "../../LIBS";
 import { swalWithCustomConfiguration } from "../../utility/constant";
 import defaultProileImage from "../../assets/images/maleprofileicon.jpg";
 
@@ -27,12 +28,27 @@ const Profile1 = () => {
   const location = useLocation();
   const redirect = `/login?redirect=${encodeURIComponent(location?.pathname)}`;
   const userName = userDetail?.name?.toCapitalize?.() || "My Account";
+  const isProfileLoading = !!authToken && typeof userDetail === "undefined";
 
   useEffect(() => {
     if (!authToken) {
       navigate(redirect);
     }
   }, [authToken, navigate, redirect]);
+
+  if (isProfileLoading) {
+    return (
+      <div
+        className={`flex min-h-screen items-center justify-center ${
+          theme === "dark"
+            ? "bg-gray-900 text-white"
+            : "bg-gray-100 text-gray-900"
+        } transition-all duration-300`}
+      >
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <div
