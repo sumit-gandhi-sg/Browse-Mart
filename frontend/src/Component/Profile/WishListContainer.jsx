@@ -9,6 +9,7 @@ import { useTheme } from "../../Context/themeContext";
 import { useUser } from "../../Context/userContext";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+const ITEMS_PER_PAGE = 4;
 
 const WishListItem = ({ product, authToken, onRemove }) => {
   const { theme } = useTheme();
@@ -185,17 +186,28 @@ const WishListContainer = ({ authToken }) => {
   const [wishList, setWishList] = useState([]);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [wishListCount, setWishListCount] = useState(0);
+  const [wishListRange, setWishListRange] = useState({
+    startProductIndex: 0,
+    endProductIndex: 0,
+  });
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const getAllWishList = async () => {
+  const getAllWishList = async (page = currentPage) => {
     setIsFetching(true);
     setError(null);
 
     try {
       const response = await axios.post(
         `${SERVER_URL}/api/user/get-wishlist`,
-        { userId: "" },
+        {
+          userId: "",
+          page,
+          limit: ITEMS_PER_PAGE,
+        },
         {
           headers: {
             "Content-type": "application/json; charset=UTF-8",
@@ -206,11 +218,25 @@ const WishListContainer = ({ authToken }) => {
 
       if (response?.status === 200) {
         setWishList(response?.data?.wishListProducts || []);
+        setTotalPages(response?.data?.totalPages || 1);
+        setWishListCount(response?.data?.totalWishListProducts || 0);
+        setWishListRange({
+          startProductIndex: response?.data?.startProductIndex || 0,
+          endProductIndex: response?.data?.endProductIndex || 0,
+        });
+        setCurrentPage(response?.data?.currentPage || page);
       }
     } catch (requestError) {
       const { status } = requestError?.response || {};
       if (status === 204) {
         setWishList([]);
+        setCurrentPage(1);
+        setTotalPages(1);
+        setWishListCount(0);
+        setWishListRange({
+          startProductIndex: 0,
+          endProductIndex: 0,
+        });
       } else {
         setError({ status: status || 500 });
       }
@@ -223,13 +249,23 @@ const WishListContainer = ({ authToken }) => {
     if (authToken) {
       getAllWishList();
     }
-  }, [authToken]);
+  }, [authToken, currentPage]);
 
-  const handleRemoveItem = (productId) => {
-    setWishList((prev) =>
-      prev.filter((item) => (item?.id || item?._id) !== productId)
-    );
+  const handleRemoveItem = () => {
+    if (wishList.length === 1 && currentPage > 1) {
+      setCurrentPage((prevPage) => prevPage - 1);
+      return;
+    }
+
+    getAllWishList(currentPage);
   };
+
+  const visiblePages = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1
+  )
+    .filter((page) => page >= Math.max(1, currentPage - 1))
+    .filter((page) => page <= Math.min(totalPages, currentPage + 1));
 
   if (isFetching) {
     return <Loader />;
@@ -281,7 +317,7 @@ const WishListContainer = ({ authToken }) => {
                 <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   Saved
                 </p>
-                <p className="mt-2 text-2xl font-bold">{wishList?.length}</p>
+                <p className="mt-2 text-2xl font-bold">{wishListCount}</p>
               </div>
               <div
                 className={`rounded-2xl border px-4 py-4 ${
@@ -289,10 +325,10 @@ const WishListContainer = ({ authToken }) => {
                 }`}
               >
                 <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                  Ready to buy
+                  On this page
                 </p>
                 <p className="mt-2 text-2xl font-bold">
-                  {wishList.filter((item) => item?.stock).length}
+                  {wishList.length}
                 </p>
               </div>
             </div>
@@ -309,6 +345,102 @@ const WishListContainer = ({ authToken }) => {
                 onRemove={handleRemoveItem}
               />
             ))}
+
+            {totalPages > 1 ? (
+              <div
+                className={`sticky bottom-0 z-10 mt-4 flex items-center justify-between gap-4 border-t px-3 py-3 mobile:flex-col small-device:flex-row ${
+                  isDark
+                    ? "border-gray-700 bg-gray-900/95"
+                    : "border-gray-200 bg-gray-100/95"
+                }`}
+              >
+                <p
+                  className={`text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Showing {wishListRange?.startProductIndex}-
+                  {wishListRange?.endProductIndex} of {wishListCount} saved items
+                </p>
+
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button
+                    className={`px-3 py-1 rounded-md disabled:opacity-50 ${
+                      isDark
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-300 text-gray-900"
+                    }`}
+                    btntext="Previous"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                  />
+
+                  {currentPage > 2 && (
+                    <>
+                      <Button
+                        className={`px-3 py-1 rounded-md ${
+                          isDark
+                            ? "bg-gray-700 text-white"
+                            : "bg-gray-300 text-gray-900"
+                        }`}
+                        btntext={1}
+                        onClick={() => setCurrentPage(1)}
+                      />
+                      {currentPage > 3 && (
+                        <span className="px-1 py-1 text-gray-500">...</span>
+                      )}
+                    </>
+                  )}
+
+                  {visiblePages.map((page) => (
+                    <Button
+                      className={`px-3 py-1 rounded-md ${
+                        page === currentPage
+                          ? "bg-purple-600 text-white"
+                          : isDark
+                            ? "bg-gray-700 text-white"
+                            : "bg-gray-300 text-gray-900"
+                      }`}
+                      key={page}
+                      btntext={page}
+                      onClick={() => setCurrentPage(page)}
+                    />
+                  ))}
+
+                  {currentPage < totalPages - 1 && (
+                    <>
+                      {currentPage < totalPages - 2 && (
+                        <span className="px-1 py-1 text-gray-500">...</span>
+                      )}
+                      <Button
+                        className={`px-3 py-1 rounded-md ${
+                          isDark
+                            ? "bg-gray-700 text-white"
+                            : "bg-gray-300 text-gray-900"
+                        }`}
+                        btntext={totalPages}
+                        onClick={() => setCurrentPage(totalPages)}
+                      />
+                    </>
+                  )}
+
+                  <Button
+                    className={`px-3 py-1 rounded-md disabled:opacity-50 ${
+                      isDark
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-300 text-gray-900"
+                    }`}
+                    btntext="Next"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                  />
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div

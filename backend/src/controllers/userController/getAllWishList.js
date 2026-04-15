@@ -1,18 +1,45 @@
 import Product from "../../model/productSchema.js";
 const getAllWishList = async (req, res) => {
   try {
-    // const activeUser = req.user;
+    const currentPage = Math.max(
+      1,
+      Number.parseInt(req?.body?.page || req?.query?.page || "1", 10)
+    );
+    const limit = Math.max(
+      1,
+      Number.parseInt(req?.body?.limit || req?.query?.limit || "10", 10)
+    );
     const wishList = await req.user?.wishlist;
-    // console.log(wishList);
+
     if (wishList?.length === 0) {
       return res.status(204).json({
         success: true,
         message: "WishList is empty",
       });
     }
-    const wishListProducts = await Promise?.all(
-      wishList?.map(async (item) => {
-        const product = await Product?.findById(item?.productId);
+
+    const totalWishListProducts = wishList.length;
+    const totalPages = Math.max(1, Math.ceil(totalWishListProducts / limit));
+    const safePage = Math.min(currentPage, totalPages);
+    const skip = (safePage - 1) * limit;
+    const paginatedWishList = wishList.slice(skip, skip + limit);
+    const productIds = paginatedWishList.map((item) => item?.productId);
+
+    const products = await Product.find({
+      _id: { $in: productIds },
+    }).populate("category", "name");
+
+    const productMap = new Map(
+      products.map((product) => [product?._id?.toString(), product])
+    );
+
+    const wishListProducts = paginatedWishList
+      .map((item) => {
+        const product = productMap.get(item?.productId?.toString());
+        if (!product) {
+          return null;
+        }
+
         return {
           id: product?._id || item?.productId || item?.id,
           name: product?.name,
@@ -21,17 +48,21 @@ const getAllWishList = async (req, res) => {
           image: product?.image?.[0],
           category: product?.category,
           stock: product?.stock,
-          //   rating: Number(totalStarRating / product?.review?.length),
           mrpPrice: product?.mrpPrice,
           sellingPrice: product?.sellingPrice,
         };
       })
-    );
-    // console.log(wishListProducts);
+      .filter(Boolean);
+
     return res.status(200).json({
       success: true,
       message: "WishList Products",
       wishListProducts,
+      totalWishListProducts,
+      totalPages,
+      currentPage: safePage,
+      startProductIndex: totalWishListProducts > 0 ? skip + 1 : 0,
+      endProductIndex: Math.min(skip + paginatedWishList.length, totalWishListProducts),
     });
   } catch (error) {
     console.log(error);
