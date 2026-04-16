@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../Context/themeContext";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button, Input, OTPInput } from "../../LIBS";
 import { FaMoon, FaSun } from "react-icons/fa6";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
-import { swalWithCustomConfiguration } from "../../utility/constant";
 import axios from "axios";
 import { BiLoaderAlt } from "react-icons/bi";
 import { useAuth } from "../../Context/authContext";
@@ -213,285 +212,270 @@ const RegisterPage = ({ userDetail }) => {
   return (
     !authToken && (
       <div
-        className={`flex items-center justify-center min-h-screen ${
+        className={`min-h-screen transition-all duration-300 ${
           theme === "dark"
-            ? "bg-gray-900 text-white"
-            : "bg-gray-100 text-gray-900"
-        }
-        transition-all duration-300`}
+            ? "bg-gray-950 text-white"
+            : "bg-slate-100 text-slate-900"
+        }`}
       >
-        <div
-          className={`w-full max-w-md  p-8 rounded-lg mobile:mx-5 small-device:mx-0  shadow-lg transition-all duration-300 ${
-            theme === "dark"
-              ? "bg-gray-800 text-white"
-              : "bg-white text-gray-900"
-          }
-      `}
-        >
-          {/* Brand Name */}
-          {/* <h2 className="text-center text-3xl font-bold mb-6 bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-            Browse Mart
-          </h2> */}
-          {step === 1 && (
-            <div>
-              <h2 className="text-4xl font-bold text-center bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                Browse Mart
-              </h2>
-              <h3
-                className={`mt-4 text-lg font-semibold ${
-                  theme === "dark" ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
-                Welcome
-              </h3>
-            </div>
-          )}
-
-          {/* Registration Form */}
-          <form
-            className=""
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
-            {step === 1 && (
-              <div className="mt-4 flex flex-col gap-2">
-                {/* Name */}
-                <div className="flex flex-col gap-2">
-                  {/* <label className="block text-sm font-medium">Email</label> */}
-                  <Input
-                    type="text"
-                    name="name"
-                    value={formData?.name}
-                    onChange={handleChange}
-                    required
-                    className={`w-full p-2 rounded-md border-2  ${
-                      theme === "dark"
-                        ? "bg-gray-700 text-white border-gray-600 focus:border-gray-300"
-                        : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
-                    }`}
-                    placeholder={"Name"}
-                  />
-                  {error.name && (
-                    <p className="text-red-500 text-sm font-medium mt-1">
-                      {error.name}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  {/* Email */}
-                  <div className="flex flex-col gap-2 w-1/2">
-                    {/* <label className="block text-sm font-medium">Email</label> */}
-                    <Input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className={`w-full p-2 rounded-md border-2  ${
-                        theme === "dark"
-                          ? "bg-gray-700 text-white border-gray-600 focus:border-gray-300"
-                          : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
-                      }`}
-                      placeholder={"Email"}
-                    />
-                    {error.email && (
-                      <p className="text-red-500 text-sm font-medium mt-1">
-                        {error.email}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2 w-1/2">
-                    {/* <label className="block text-sm font-medium">Email</label> */}
-                    <Input
-                      type="number"
-                      name="phoneNumber"
-                      value={formData?.phoneNumber}
-                      onChange={handleChange}
-                      required
-                      className={`w-full p-2 rounded-md border-2  ${
-                        theme === "dark"
-                          ? "bg-gray-700 text-white border-gray-600 focus:border-gray-300"
-                          : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
-                      }`}
-                      placeholder={"Mobile No"}
-                    />
-                    {error.phoneNumber && (
-                      <p className="text-red-500 text-sm font-medium mt-1">
-                        {error.phoneNumber}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-2 relative">
-                    {/* <label className="block text-sm font-medium">Password</label> */}
-                    <div className="w-full relative">
-                      <Input
-                        type={`${
-                          isPasswordShow.password ? "text" : "password"
-                        }`}
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                        className={`w-full p-2 rounded-md border-2  ${
-                          theme === "dark"
-                            ? "bg-gray-700 text-white border-gray-600 focus:border-gray-300"
-                            : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
-                        }`}
-                        placeholder={"Password"}
-                      />
-
-                      <div
-                        onClick={() => passwordToggle("password")}
-                        className={`hover:cursor-pointer absolute  right-3 top-1/2 -translate-y-1/2 ${
-                          formData?.password
-                            ? "flex items-center justify-center"
-                            : "hidden"
-                        } `}
-                      >
-                        {isPasswordShow.password ? (
-                          <FaEyeSlash
-                            className={`${
-                              theme === "dark" ? "text-white" : "text-gray-900"
-                            }`}
-                          />
-                        ) : (
-                          <FaEye
-                            className={` ${
-                              theme === "dark" ? "text-white" : "text-gray-900"
-                            }`}
-                          />
-                        )}
-                      </div>
-                    </div>
-                    {error.password && (
-                      <p className="text-red-500 text-sm font-medium mt-1">
-                        {error.password}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div className="flex flex-col gap-2 relative">
-                    <div className="w-full relative">
-                      <Input
-                        type={`${
-                          isPasswordShow.confirmPassword ? "text" : "password"
-                        }`}
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        required
-                        className={`w-full p-2 rounded-md border-2  ${
-                          theme === "dark"
-                            ? "bg-gray-700 text-white border-gray-600 focus:border-gray-300"
-                            : "text-gray-900 bg-gray-100 border-gray-300 focus:border-gray-600"
-                        }`}
-                        placeholder={"Comfirm Password"}
-                      />
-
-                      <div
-                        onClick={() => passwordToggle("confirmPassword")}
-                        className={`hover:cursor-pointer absolute top-1/2  right-3  -translate-y-1/2 ${
-                          formData?.confirmPassword
-                            ? "flex items-center justify-center"
-                            : "hidden"
-                        } `}
-                      >
-                        {isPasswordShow.confirmPassword ? (
-                          <FaEyeSlash
-                            className={`${
-                              theme === "dark" ? "text-white" : "text-gray-900"
-                            }`}
-                          />
-                        ) : (
-                          <FaEye
-                            className={` ${
-                              theme === "dark" ? "text-white" : "text-gray-900"
-                            }`}
-                          />
-                        )}
-                      </div>
-                    </div>
-                    {error.confirmPassword && (
-                      <p className="text-red-500 text-sm font-medium mt-1">
-                        {error.confirmPassword}
-                      </p>
-                    )}
-                  </div>
-                  {error.passwordValidation && (
-                    <p className="text-red-500 text-sm font-medium mt-1 col-span-2">
-                      {error.passwordValidation}
-                    </p>
-                  )}
-
-                  {errorMessage && (
-                    <p className="text-red-500 text-sm font-medium mt-1 col-span-2">
-                      {errorMessage}
-                    </p>
-                  )}
-                </div>
-                <div></div>
-                {/* Register Button */}
-                <Button
-                  btntext={`${isProcessing ? "Please Wait" : "Sign up"}`}
-                  className="w-full mt-4  text-white py-2 rounded-md bg-gradient-to-r from-blue-500 to-purple-500"
-                  onClick={handleSubmit}
-                  icon={
-                    isProcessing ? (
-                      <BiLoaderAlt className="animate-spin h-6 w-6" />
-                    ) : (
-                      ""
-                    )
-                  }
-                />
-              </div>
-            )}
-
-            {step === 2 && (
-              <OTPInput
-                message={message}
-                errorMessage={errorMessage}
-                onOtpVerify={onOtpVerify}
-                isProcessing={isProcessing}
-                onResendOTP={onResendOTP}
-              />
-            )}
-          </form>
-
-          {/* Login Link */}
-
-          <div
-            className={`text-center mt-4  ${
-              theme === "dark" ? "text-gray-300" : "text-gray-600"
-            } `}
-          >
-            Already have an account?{" "}
-            <Link className="text-blue-500 hover:underline" to={"/login"}>
-              Log in
-            </Link>
-          </div>
-        </div>
-        {/* THeme Toggle Button */}
         <Button
           onClick={toggleTheme}
-          className={`p-2 rounded-full z-10 bg-opacity-75 fixed shadow w-10 h-10 bottom-5 right-5 ${
-            theme === "dark" ? "bg-gray-400" : "bg-gray-300"
+          className={`fixed right-5 top-5 z-20 h-10 w-10 rounded-full shadow ${
+            theme === "dark" ? "bg-slate-800" : "bg-white"
           }`}
           icon={
             theme === "dark" ? (
-              <FaSun className="text-yellow-400 w-5 h-5 " />
+              <FaSun className="h-5 w-5 text-amber-300" />
             ) : (
-              <FaMoon className="text-gray-800 w-5 h-5" />
+              <FaMoon className="h-5 w-5 text-slate-700" />
             )
           }
         />
+
+        <div className="mx-auto flex min-h-screen max-w-6xl items-center px-4 py-10 tablet:px-6">
+          <div
+            className={`grid w-full overflow-hidden rounded-3xl border shadow-2xl laptop:grid-cols-[1.05fr_1fr] ${
+              theme === "dark"
+                ? "border-slate-800 bg-slate-900"
+                : "border-slate-200 bg-white"
+            }`}
+          >
+            <div
+              className={`hidden p-10 laptop:block ${
+                theme === "dark"
+                  ? "bg-gradient-to-br from-fuchsia-700 via-indigo-700 to-blue-700"
+                  : "bg-gradient-to-br from-fuchsia-500 via-indigo-500 to-blue-500"
+              }`}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+                New On Browse Mart
+              </p>
+              <h1 className="mt-6 text-4xl font-black leading-tight text-white">
+                Create your account and start exploring.
+              </h1>
+              <p className="mt-4 max-w-md text-sm leading-7 text-white/85">
+                Register once and enjoy seamless checkout, wishlist tracking,
+                and smart shopping updates.
+              </p>
+              <div className="mt-10 space-y-3 text-sm text-white/90">
+                <p>1. Register with email and phone</p>
+                <p>2. Verify OTP securely</p>
+                <p>3. Start shopping instantly</p>
+              </div>
+            </div>
+
+            <div className="p-6 mobile:p-5 tablet:p-8">
+              <h2 className="text-3xl font-black tracking-tight">
+                {step === 1 ? "Create Account" : "Verify OTP"}
+              </h2>
+              <p
+                className={`mt-2 text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
+              >
+                {step === 1
+                  ? "Fill in your details to register your Browse Mart account."
+                  : "Enter the code we sent to verify your email."}
+              </p>
+
+              <form
+                className="mt-7"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                }}
+              >
+                {step === 1 && (
+                  <div className="space-y-3">
+                    <div>
+                      <Input
+                        type="text"
+                        name="name"
+                        value={formData?.name}
+                        onChange={handleChange}
+                        required
+                        className={`w-full rounded-xl border-2 p-3 ${
+                          theme === "dark"
+                            ? "border-slate-700 bg-slate-800 text-white"
+                            : "border-slate-300 bg-slate-50 text-slate-900"
+                        }`}
+                        placeholder="Full Name"
+                      />
+                      {error.name && (
+                        <p className="mt-1 text-sm font-medium text-red-500">
+                          {error.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid gap-3 small-device:grid-cols-2">
+                      <div>
+                        <Input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          required
+                          className={`w-full rounded-xl border-2 p-3 ${
+                            theme === "dark"
+                              ? "border-slate-700 bg-slate-800 text-white"
+                              : "border-slate-300 bg-slate-50 text-slate-900"
+                          }`}
+                          placeholder="Email"
+                        />
+                        {error.email && (
+                          <p className="mt-1 text-sm font-medium text-red-500">
+                            {error.email}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Input
+                          type="number"
+                          name="phoneNumber"
+                          value={formData?.phoneNumber}
+                          onChange={handleChange}
+                          required
+                          className={`w-full rounded-xl border-2 p-3 ${
+                            theme === "dark"
+                              ? "border-slate-700 bg-slate-800 text-white"
+                              : "border-slate-300 bg-slate-50 text-slate-900"
+                          }`}
+                          placeholder="Mobile Number"
+                        />
+                        {error.phoneNumber && (
+                          <p className="mt-1 text-sm font-medium text-red-500">
+                            {error.phoneNumber}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 small-device:grid-cols-2">
+                      <div className="relative">
+                        <Input
+                          type={isPasswordShow.password ? "text" : "password"}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          required
+                          className={`w-full rounded-xl border-2 p-3 pr-10 ${
+                            theme === "dark"
+                              ? "border-slate-700 bg-slate-800 text-white"
+                              : "border-slate-300 bg-slate-50 text-slate-900"
+                          }`}
+                          placeholder="Password"
+                        />
+                        {formData?.password && (
+                          <button
+                            type="button"
+                            onClick={() => passwordToggle("password")}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                          >
+                            {isPasswordShow.password ? (
+                              <FaEyeSlash />
+                            ) : (
+                              <FaEye />
+                            )}
+                          </button>
+                        )}
+                        {error.password && (
+                          <p className="mt-1 text-sm font-medium text-red-500">
+                            {error.password}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="relative">
+                        <Input
+                          type={
+                            isPasswordShow.confirmPassword ? "text" : "password"
+                          }
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleChange}
+                          required
+                          className={`w-full rounded-xl border-2 p-3 pr-10 ${
+                            theme === "dark"
+                              ? "border-slate-700 bg-slate-800 text-white"
+                              : "border-slate-300 bg-slate-50 text-slate-900"
+                          }`}
+                          placeholder="Confirm Password"
+                        />
+                        {formData?.confirmPassword && (
+                          <button
+                            type="button"
+                            onClick={() => passwordToggle("confirmPassword")}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                          >
+                            {isPasswordShow.confirmPassword ? (
+                              <FaEyeSlash />
+                            ) : (
+                              <FaEye />
+                            )}
+                          </button>
+                        )}
+                        {error.confirmPassword && (
+                          <p className="mt-1 text-sm font-medium text-red-500">
+                            {error.confirmPassword}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {error.passwordValidation && (
+                      <p className="text-sm font-medium text-red-500">
+                        {error.passwordValidation}
+                      </p>
+                    )}
+
+                    {errorMessage && (
+                      <p className="text-sm font-medium text-red-500">
+                        {errorMessage}
+                      </p>
+                    )}
+
+                    <Button
+                      btntext={
+                        isProcessing ? "Please wait..." : "Create Account"
+                      }
+                      className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-white"
+                      onClick={handleSubmit}
+                      icon={
+                        isProcessing ? (
+                          <BiLoaderAlt className="h-5 w-5 animate-spin" />
+                        ) : (
+                          ""
+                        )
+                      }
+                      disabled={isProcessing}
+                    />
+                  </div>
+                )}
+
+                {step === 2 && (
+                  <OTPInput
+                    message={message}
+                    errorMessage={errorMessage}
+                    onOtpVerify={onOtpVerify}
+                    isProcessing={isProcessing}
+                    onResendOTP={onResendOTP}
+                  />
+                )}
+              </form>
+
+              <p
+                className={`mt-6 text-center text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}
+              >
+                Already have an account?{" "}
+                <Link
+                  className="font-semibold text-blue-500 hover:underline"
+                  to="/login"
+                >
+                  Login
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     )
   );

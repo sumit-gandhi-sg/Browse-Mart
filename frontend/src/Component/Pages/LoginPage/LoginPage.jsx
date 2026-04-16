@@ -9,6 +9,7 @@ import { swalWithCustomConfiguration } from "../../../utility/constant";
 import { customToast } from "../../../utility/constant";
 import Swal from "sweetalert2";
 import { useAuth } from "../../../Context/authContext";
+import { adminUser } from "../../../utility/constant";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 //form direct action config
 // action={`${SERVER_URL}${isSignUpShow ? "/create-user" : ""}`}
@@ -16,7 +17,10 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
 const LoginPage = () => {
   const location = useLocation();
-  const [islogining, setIslogining] = useState(false);
+  const [isQuickLogining, setIsQuickLogining] = useState({
+    guest: false,
+    admin: false,
+  });
   const navigate = useNavigate();
   const [isSignUpShow, setIsSignUpShow] = useState(false);
   const { authToken, setAuthToken } = useAuth();
@@ -27,7 +31,7 @@ const LoginPage = () => {
   const redirect = new URLSearchParams(location?.search)?.get("redirect");
 
   const handleGuestLogin = () => {
-    setIslogining((prev) => !prev);
+    setIsQuickLogining((prev) => ({ ...prev, guest: true }));
     axios({
       method: "POST",
       url: `${SERVER_URL}/api/auth/login`,
@@ -38,7 +42,6 @@ const LoginPage = () => {
         if (response?.status === 200) {
           localStorage.setItem("AuthToken", response?.data?.AuthToken);
           setAuthToken(response?.data?.AuthToken);
-          setIslogining((prev) => !prev);
           navigate(redirect ? `${redirect}` : "/");
           customToast()?.fire({
             icon: "success",
@@ -55,7 +58,6 @@ const LoginPage = () => {
       .catch((error) => {
         const status = error?.response?.status;
         const message = error?.response?.data?.message;
-        setIslogining((prev) => !prev);
         if (status === 404) {
           swalWithCustomConfiguration?.fire("Oops!", message, "error");
         } else if (status === 401) {
@@ -69,12 +71,44 @@ const LoginPage = () => {
             "error",
           );
         }
+      })
+      .finally(() => {
+        setIsQuickLogining((prev) => ({ ...prev, guest: false }));
+      });
+  };
+
+  const handleAdminLogin = () => {
+    setIsQuickLogining((prev) => ({ ...prev, admin: true }));
+    axios({
+      method: "POST",
+      url: `${SERVER_URL}/api/auth/login`,
+      data: adminUser,
+      headers: { "Content-type": "application/json; charset=UTF-8" },
+    })
+      .then((response) => {
+        if (response?.status === 200) {
+          localStorage.setItem("AuthToken", response?.data?.AuthToken);
+          setAuthToken(response?.data?.AuthToken);
+          navigate(redirect ? `${redirect}` : "/");
+          customToast()?.fire({
+            icon: "success",
+            title: "Admin Login Successfully!",
+          });
+        }
+      })
+      .catch((error) => {
+        const message =
+          error?.response?.data?.message || "Something went wrong";
+        swalWithCustomConfiguration?.fire("Oops!", message, "error");
+      })
+      .finally(() => {
+        setIsQuickLogining((prev) => ({ ...prev, admin: false }));
       });
   };
   // const [authToken, setAuthToken] = useState(localStorage.getItem("AuthToken"));
   useEffect(() => {
     if (authToken) navigate("/");
-  }, [authToken]);
+  }, [authToken, navigate]);
 
   return (
     <div className="w-screen flex h-screen laptop:w-screen laptop:h-screen bg-blue-300  ">
@@ -127,12 +161,20 @@ const LoginPage = () => {
               redirect={redirect}
             />
           )}
-          <div className="w-full p-3 flex justify-center">
+          <div className="w-full p-3 grid grid-cols-2 gap-2">
             <Button
               btntext={"Guest Login"}
               className={"w-full p-2 bg-blue-500 rounded text-white"}
               onClick={handleGuestLogin}
-              loading={islogining}
+              loading={isQuickLogining.guest}
+              disabled={isQuickLogining.admin}
+            />
+            <Button
+              btntext={"Admin Login"}
+              className={"w-full p-2 bg-slate-800 rounded text-white"}
+              onClick={handleAdminLogin}
+              loading={isQuickLogining.admin}
+              disabled={isQuickLogining.guest}
             />
           </div>
         </div>

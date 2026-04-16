@@ -4,12 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import axios from "axios";
 import { Navigate } from "react-router-dom";
 import { useCart } from "../../Context/cartContext";
-import {
-  LoginPage,
-  RegisterPage,
-  ForgetPasswordPage,
-  Login,
-} from "../Pages";
+import { RegisterPage, ForgetPasswordPage, Login } from "../Pages";
 import Profile1, {
   ProfileIndexRedirect,
   ProfileOrdersPage,
@@ -36,17 +31,13 @@ axios.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
-  },
-  {
-    path: "/login-1",
-    element: <LoginPage />,
   },
   {
     path: "/register",
@@ -126,7 +117,6 @@ const App = () => {
     }
   };
 
-  // eslint-disable-next-line no-extend-native
   String.prototype.toCapitalize = function () {
     if (this.length === 0) return "";
     const words = this.split(" ");
