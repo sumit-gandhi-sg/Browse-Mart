@@ -21,7 +21,7 @@ const register = async (req, res) => {
         success: false,
         message: "Both password and confirm password must be same",
       });
-    const hashedOtp = await sendOtpEmail(email, "Your Registration OTP");
+    const hashedOtp = await sendOtpEmail(email, "Verify Your Registration OTP");
     const otpExpireAt = new Date(Date.now() + 10 * 60 * 1000);
 
     if (!hashedOtp) {

@@ -29,7 +29,7 @@ const resendOtp = async (req, res) => {
     }
 
     // Generate new OTP
-    const hashedOtp = await sendOtpEmail(email, "Your Registration OTP");
+    const hashedOtp = await sendOtpEmail(email, "Verify Your Registration OTP");
 
     if (!hashedOtp) {
       return res.status(500).json({
