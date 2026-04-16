@@ -569,19 +569,39 @@ export const swalWithCustomConfiguration = {
           };
 
     const incomingDidOpen = incomingOptions?.didOpen;
+    const toneClass = incomingOptions?.icon
+      ? `swal-tone-${incomingOptions.icon}`
+      : "swal-tone-default";
 
     return Swal.fire({
       ...incomingOptions,
-      background: isDark ? "#1f2937" : "#ffffff",
+      background: "transparent",
       color: isDark ? "#f9fafb" : "#111827",
+      buttonsStyling: false,
+      showClass: {
+        popup: "swal-animate-enter",
+        backdrop: "swal-backdrop-enter",
+      },
+      hideClass: {
+        popup: "swal-animate-leave",
+        backdrop: "swal-backdrop-leave",
+      },
       customClass: {
-        popup: isDark
-          ? "bg-gray-800 text-white border border-gray-700 rounded-xl"
-          : "bg-white text-gray-900 border border-gray-200 rounded-xl",
-        title: isDark ? "text-white" : "text-gray-900",
-        htmlContainer: isDark ? "text-gray-300" : "text-gray-700",
-        denyButton: "bg-gray-300 text-white",
-        confirmButton: "confirm-btn",
+        container: "swal-themed-container",
+        popup: `swal-themed-popup ${isDark ? "swal-theme-dark" : "swal-theme-light"} ${toneClass}`,
+        title: "swal-themed-title",
+        htmlContainer: "swal-themed-content",
+        actions: "swal-themed-actions",
+        confirmButton:
+          incomingOptions?.icon === "error" ||
+          incomingOptions?.confirmButtonText
+            ?.toString()
+            ?.toLowerCase()
+            ?.includes("delete")
+            ? "swal-btn-danger"
+            : "swal-btn-primary",
+        denyButton: "swal-btn-secondary",
+        cancelButton: "swal-btn-secondary",
         ...(incomingOptions?.customClass || {}),
       },
       didOpen: (popup) => {
@@ -624,53 +644,20 @@ export const customToast = (theme) => {
     showConfirmButton: false,
     timer: 2000,
     timerProgressBar: true,
-    background: isDark ? "#1f2937" : "#ffffff",
+    background: "transparent",
     color: isDark ? "#f9fafb" : "#111827",
+    showClass: {
+      popup: "swal-toast-enter",
+    },
+    hideClass: {
+      popup: "swal-toast-leave",
+    },
+    customClass: {
+      popup: `swal-toast-popup ${isDark ? "swal-theme-dark" : "swal-theme-light"}`,
+      title: "swal-toast-title",
+      htmlContainer: "swal-toast-content",
+    },
     didOpen: (toast) => {
-      const baseClasses = [
-        "rounded-lg",
-        "shadow-lg",
-        "p-3",
-        "font-medium",
-        "text-sm",
-        "transition-all",
-        "duration-300",
-        "border",
-      ];
-
-      const darkClasses = ["bg-gray-800", "text-white", "border-gray-700"];
-      const lightClasses = ["bg-white", "text-gray-900", "border-gray-200"];
-
-      toast.classList.add(
-        ...baseClasses,
-        ...(isDark ? darkClasses : lightClasses),
-      );
-
-      // SweetAlert sets internal title/content colors; force theme-aligned text colors.
-      const titleEl = toast.querySelector(".swal2-title");
-      const contentEl = toast.querySelector(".swal2-html-container");
-      const closeEl = toast.querySelector(".swal2-close");
-
-      if (titleEl) {
-        titleEl.style.color = isDark ? "#f9fafb" : "#111827";
-      }
-
-      if (contentEl) {
-        contentEl.style.color = isDark ? "#e5e7eb" : "#1f2937";
-      }
-
-      if (closeEl) {
-        closeEl.style.color = isDark ? "#d1d5db" : "#374151";
-      }
-
-      // Style progress bar
-      const progressBar = toast.querySelector(".swal2-progress-bar");
-      if (progressBar) {
-        progressBar.style.backgroundColor = isDark ? "#2563EB" : "#3B82F6";
-        progressBar.style.borderRadius = "0 0 0.5rem 0.5rem";
-      }
-
-      // Pause timer on hover
       toast.onmouseenter = Swal.stopTimer;
       toast.onmouseleave = Swal.resumeTimer;
     },
